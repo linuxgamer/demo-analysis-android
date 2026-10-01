@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">TF2 Demo Detector</string>
+    <string name="app_name">TF2DemoAnalyzer</string>
     <string name="pick_demo">Pick demo file</string>
     <string name="analyze">Analyze</string>
     <string name="working">Analyzing…</string>
