@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">TF2 Demo Detector</string>
+    <string name="pick_demo">Pick demo file</string>
+    <string name="analyze">Analyze</string>
+    <string name="working">Analyzing…</string>
+    <string name="idle">Pick a .dem file to begin</string>
+    <string name="share_json">Share JSON</string>
+</resources>

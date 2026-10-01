@@ -1,0 +1,8 @@
+.gradle/
+build/
+local.properties
+android/build/
+android/src/main/jniLibs/
+rust/target/
+.kotlin/
+.idea/

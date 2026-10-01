@@ -1,0 +1,21 @@
+[package]
+name = "demo-analysis-android"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "demo_analysis_android"
+crate-type = ["cdylib"]
+
+[dependencies]
+anyhow = "1"
+jni = "0.21"
+serde_json = "1"
+demo-analysis = { path = "../../tf2-demo-player-aio-main/demo-analysis" }
+
+# rfd and opener are only referenced by demo-analysis's desktop gui binary, but as non-optional
+# dependencies they are still compiled for every target - and neither supports Android. Patched
+# with empty stubs so the library links cleanly; nothing in the lib target ever calls into them.
+[patch.crates-io]
+rfd = { path = "stubs/rfd" }
+opener = { path = "stubs/opener" }
