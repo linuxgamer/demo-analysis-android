@@ -1,94 +1,98 @@
 # AGENTS.md
 
-Цель проекта: Android-порт **demo-analysis** (Rust-крейт для анализа TF2-демо
-и поиска читеров). Корень репозитория = корень Gradle-проекта. Этот файл —
-для агентов, работающих здесь.
+Project goal: Android port of **demo-analysis** (Rust crate that analyzes TF2
+demo files for cheaters). The repository root is the Gradle project root. This
+file is for agents working in this repo.
 
-## Структура репозитория
+## Repository layout
 
 ```
 /demo-analysis-android
-├── README.md                # обзор проекта, сборка, лицензии
-├── SETUP.md                 # установка окружения (Rust, SDK, NDK, JDK 21)
-├── .github/workflows/android.yml  # CI: APK debug+release (артефакты) + release на тегах
+├── README.md                # project overview, build, licenses
+├── SETUP.md                 # environment setup (Rust, SDK, NDK, JDK 21)
+├── .github/workflows/android.yml  # CI: debug+release APKs (artifacts) + release on tags
 ├── settings.gradle.kts, build.gradle.kts, gradle.properties
-├── android/                 # модуль приложения (Kotlin)
-│   ├── build.gradle.kts     # задача buildRust: cargo-ndk → src/main/jniLibs
+├── android/                 # application module (Kotlin)
+│   ├── build.gradle.kts     # buildRust task: cargo-ndk → src/main/jniLibs
 │   └── src/main/java/dev/stast/demodetector/
 │       ├── DemoAnalysis.kt  # external funs (JNI)
-│       └── MainActivity.kt  # SAF-пикер, анализ на Dispatchers.IO, поллинг прогресса
-└── rust/                    # cdylib crate demo-analysis-android (JNI-мост)
-    ├── Cargo.toml           # git-зависимость demo-analysis (rev-пин!)
-    ├── src/lib.rs           # весь JNI-слой
-    └── stubs/{rfd,opener}/  # пустые стабы desktop-only зависимостей через [patch.crates-io]
+│       └── MainActivity.kt  # SAF picker, analysis on Dispatchers.IO, progress polling
+└── rust/                    # cdylib crate demo-analysis-android (JNI bridge)
+    ├── Cargo.toml           # git dependency on demo-analysis (rev-pinned!)
+    ├── src/lib.rs           # the whole JNI layer
+    └── stubs/{rfd,opener}/  # empty stubs for desktop-only deps via [patch.crates-io]
 ```
 
-## Зависимость demo-analysis
+## The demo-analysis dependency
 
-Код анализа **не вендорится**: `rust/Cargo.toml` подключает `demo-analysis`
-git-зависимостью из
+The analysis code is **not vendored**: `rust/Cargo.toml` pulls in
+`demo-analysis` as a git dependency from
 [eatthefreakingpaper/tf2-demo-player-aio](https://github.com/eatthefreakingpaper/tf2-demo-player-aio)
-(пакет лежит в подкаталоге `demo-analysis/`, cargo находит его по имени),
-rev-пин обязателен для воспроизводимости. Поднять пин = заменить `rev` в
-`rust/Cargo.toml` + обновить `rust/Cargo.lock`.
+(the package lives in the `demo-analysis/` subdirectory; cargo finds it by
+name). The `rev` pin is mandatory for reproducibility. Bumping the pin =
+replacing `rev` in `rust/Cargo.toml` + updating `rust/Cargo.lock`.
 
-Это расширенный форк https://github.com/Nocrex/demo-analysis (GPLv3): публичное
-поле `CheatAnalyser.analyser`, дополненный `CheatAnalyserState`, наборы
-алгоритмов `nocrex/` и `fidoo/`, система параметров.
+That repo is an extended fork of https://github.com/Nocrex/demo-analysis
+(GPLv3): public `CheatAnalyser.analyser` field, extended `CheatAnalyserState`,
+the `nocrex/` and `fidoo/` algorithm sets, and a parameter system.
 
-## Что делает demo-analysis
+## What demo-analysis does
 
-Читает файл `.dem` (запись матча TF2), стримит его через `tf-demo-parser`,
-строит на каждом тике `CheatAnalyserState` (игроки, постройки, оружие, снаряды,
-состояния) и прогоняет набор алгоритмов-детекторов. На выходе — JSON со списком
-`Detection { tick, algorithm, player (steamid64), data }`.
+Reads a `.dem` file (a TF2 match recording), streams it through
+`tf-demo-parser`, builds a `CheatAnalyserState` (players, buildings, weapons,
+projectiles, states) on every tick and runs a set of detector algorithms.
+Output: JSON with a list of `Detection { tick, algorithm, player (steamid64),
+data }`.
 
-Ключевые точки входа (`demo-analysis/src/lib/algorithm.rs` в репо-зависимости):
-- `get_algorithms()` — реестр всех алгоритмов.
-- `analyse(&demo, algorithms, progress_cb)` — однопроходный анализ.
-- `analyse_multithreaded(bytes, algorithms, threads, cb)` — по потоку на группу
-  алгоритмов, каждый перечитывает демо заново.
-- Трейт `CheatAlgorithm` — контракт алгоритма; `Detection` — результат.
+Key entry points (`demo-analysis/src/lib/algorithm.rs` in the dependency):
+- `get_algorithms()` — registry of all algorithms.
+- `analyse(&demo, algorithms, progress_cb)` — single-pass analysis.
+- `analyse_multithreaded(bytes, algorithms, threads, cb)` — one thread per
+  algorithm group, each re-reads the demo stream.
+- `CheatAlgorithm` trait — the algorithm contract; `Detection` — the result.
 
-Ядро состояния — `demo-analysis/src/base/cheat_analyser_base.rs`:
-`CheatAnalyserState`, `CheatAnalyser` (реализует `MessageHandler` из
+The state core is `demo-analysis/src/base/cheat_analyser_base.rs`:
+`CheatAnalyserState`, `CheatAnalyser` (implements `MessageHandler` from
 `tf-demo-parser`), `Player`, `Building`/`Sentry`/`Dispenser`/`Teleporter`,
 `WeaponEntity`, `World`. `base/demo_handler_base.rs` — `CheatDemoHandler`,
-гоняет пакеты в анализатор (поле `analyser` публичное — локальное отличие форка).
+pumps packets into the analyser (the `analyser` field is public — a local
+difference of this fork).
 
-Исходники клона: `~/.cargo/git/checkouts/tf2-demo-player-aio-*/<rev>/demo-analysis/`.
+Clone sources land in:
+`~/.cargo/git/checkouts/tf2-demo-player-aio-*/<rev>/demo-analysis/`.
 
-## Алгоритмы
+## Algorithms
 
-- Боевые (16): `viewangles_180degrees`, `angle_history`, `backtrack`, `double_tap`,
-  `triggerbot`, `firewindow`, `recorder_aim_assist`, `nocrex/{aimsnap, angle_repeat,
-  oob_pitch}`, `fidoo/{silent_aim, psilent4, nospread, auto_backstab, bunnyhop,
-  invalid_equip_region}`. Пример с комментариями — `viewangles_180degrees.rs`.
-- Dev (3): `all_messages`, `write_to_file`, `viewangles_to_csv` — пишут в
-  `./output` и паникуют в `init()` при неудаче. На Android отсекаются списком
-  `DEV_ALGORITHMS` в `rust/src/lib.rs`, в UI не показываются.
+- Combat (16): `viewangles_180degrees`, `angle_history`, `backtrack`,
+  `double_tap`, `triggerbot`, `firewindow`, `recorder_aim_assist`,
+  `nocrex/{aimsnap, angle_repeat, oob_pitch}`, `fidoo/{silent_aim, psilent4,
+  nospread, auto_backstab, bunnyhop, invalid_equip_region}`. The commented
+  example is `viewangles_180degrees.rs`.
+- Dev (3): `all_messages`, `write_to_file`, `viewangles_to_csv` — they write
+  into `./output` and panic in `init()` on failure. On Android they are cut
+  off by the `DEV_ALGORITHMS` list in `rust/src/lib.rs` and never shown in UI.
 
-## Android-слой
+## Android layer
 
-- `rust/src/lib.rs` — JNI-мост: `version`, `algorithmsJson` (схема алгоритмов +
-  параметров для UI), `analyse(fd, algorithms, configJson, threads)`,
-  `progressCurrent/Total/resetProgress` (глобальные атомики ядра).
-- Владение fd: Kotlin делает `detachFd()`, Rust принимает `File::from_raw_fd`
-  **первым действием** и закрывает сам на любом пути (не закрывать дважды).
-- Паники ядра ловятся `catch_unwind` → Java `RuntimeException`.
-- JSON результата повторяет формат CLI `print_detection_json` (без `println!`,
-  из публичных полей `CheatAnalyser`).
-- Kotlin: `DemoAnalysis.kt` (external funs), `MainActivity.kt` (SAF-пикер,
-  `Dispatchers.IO`, поллинг прогресса 4 раза/с, шаринг JSON).
-- Release-сборка подписывается debug-ключом (`signingConfig = debug`) — чтобы
-  CI-артефакт был ставибельным; это не релиз для стора.
+- `rust/src/lib.rs` — the JNI bridge: `version`, `algorithmsJson` (algorithm +
+  parameter schema for the UI), `analyse(fd, algorithms, configJson, threads)`,
+  `progressCurrent/Total/resetProgress` (core global atomics).
+- fd ownership: Kotlin calls `detachFd()`, Rust adopts `File::from_raw_fd` as
+  its **very first action** and closes it on every path (never close twice).
+- Core panics are caught by `catch_unwind` → Java `RuntimeException`.
+- The result JSON mirrors the CLI `print_detection_json` format (no
+  `println!`, built from public `CheatAnalyser` fields).
+- Kotlin: `DemoAnalysis.kt` (external funs), `MainActivity.kt` (SAF picker,
+  `Dispatchers.IO`, progress polling 4x/s, JSON sharing).
+- The release build is signed with the debug key (`signingConfig = debug`) so
+  CI artifacts install out of the box; this is not a store release.
 
-## Сборка
+## Build
 
-Требования: Rust + таргеты `aarch64-linux-android`/`x86_64-linux-android`,
-`cargo-ndk`, Android SDK + NDK 27.0.12077973, **JDK 21** (Java 27 Gradle 8.x
-не берёт; на машине JDK в `~/tools/jdk-21.0.12.1+1`, SDK в
-`~/Проекты/android-sdk`, экспорты уже в `~/.bashrc`).
+Requirements: Rust + `aarch64-linux-android`/`x86_64-linux-android` targets,
+`cargo-ndk`, Android SDK + NDK 27.0.12077973, **JDK 21** (Gradle 8.x rejects
+Java 27; on this machine the JDK lives in `~/tools/jdk-21.0.12.1+1`, the SDK
+in `~/Проекты/android-sdk`, exports already in `~/.bashrc`).
 
 ```bash
 export JAVA_HOME="$HOME/tools/jdk-21.0.12.1+1"
@@ -97,31 +101,34 @@ export ANDROID_NDK_HOME="$ANDROID_HOME/ndk/27.0.12077973"
 ./gradlew :android:assembleDebug :android:assembleRelease
 ```
 
-- Задача `:android:buildRust` вызывает `cargo-ndk` (arm64-v8a + x86_64,
-  `--platform 26`) и кладёт `.so` в `android/src/main/jniLibs` (в git не входит).
-- Быстрая проверка ядра без устройства: `cargo check` в `rust/` (нужна сеть —
-  git-зависимость). JNI-смок-тест под host JVM — см. историю: класс с
-  native-методами `dev.stast.demodetector.DemoAnalysis`,
-  `rust/target/debug/libdemo_analysis_android.so`.
-- CI делает то же: `.github/workflows/android.yml` (ubuntu-latest, temurin 21,
-  ndk 27, cargo-ndk из taiki-e/install-action).
+- The `:android:buildRust` task runs `cargo-ndk` (arm64-v8a + x86_64,
+  `--platform 26`) and drops the `.so` files into `android/src/main/jniLibs`
+  (not committed).
+- Quick core check without a device: `cargo check` in `rust/` (needs network —
+  git dependency). For a JNI smoke test under a host JVM, see the session
+  history: a class with the native methods of `dev.stast.demodetector.DemoAnalysis`
+  plus `rust/target/debug/libdemo_analysis_android.so`.
+- CI does the same: `.github/workflows/android.yml` (ubuntu-latest, temurin 21,
+  ndk 27, cargo-ndk from taiki-e/install-action).
 
-## Платформенные ограничения (важно)
+## Platform constraints (important)
 
-- `tf-demo-parser` держит демо целиком в памяти — демо бывают сотни МБ (риск OOM).
-- `analyse_multithreaded`: каждый воркер хранит своё состояние; на мобиле
-  `threads` ограничивать (сейчас из Kotlin передаётся 2).
-- Git-зависимость требует сети при первой сборке; Cargo.lock пинует всё
-  транзитивно, но ревизию форка пинуем вручную через `rev`.
+- `tf-demo-parser` keeps the whole demo in memory — demos reach hundreds of MB
+  (OOM risk).
+- `analyse_multithreaded`: every worker keeps its own state; cap `threads` on
+  mobile (currently 2, passed from Kotlin).
+- The git dependency needs network on first build; Cargo.lock pins everything
+  transitively, but the fork revision is pinned manually via `rev`.
 
-## Лицензия
+## License
 
-`demo-analysis` — GPLv3, остальное — MIT. Комбинированная работа: при
-распространении APK действует GPLv3.
+`demo-analysis` is GPLv3, the rest is MIT. Combined work: GPLv3 applies to
+distributed APKs.
 
-## Правила работы
+## Working rules
 
-- Патчи форка demo-analysis — только через отдельный fork-репозиторий, не локально.
-- Комментарии в стиле репозитория (английский, содержательные).
-- После правок Rust: `cargo check` в `rust/`; после правок Kotlin:
-  `./gradlew :android:assembleDebug` должен проходить.
+- Patches to the demo-analysis fork go through a separate fork repository,
+  never locally.
+- Comments follow repository style (English, meaningful).
+- After Rust changes: `cargo check` in `rust/`; after Kotlin changes:
+  `./gradlew :android:assembleDebug` must pass.
