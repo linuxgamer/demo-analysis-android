@@ -45,9 +45,14 @@ class AlgorithmAdapter(
                 onChanged()
             }
 
-            val values = state.params[info.name]
-            summary.visibility = if (values.isNullOrEmpty()) View.GONE else View.VISIBLE
-            summary.text = values?.entries?.joinToString(", ") { "${it.key}=${it.value}" }
+            // Always show the effective values (defaults included) so it's
+            // obvious the row is configurable — desktop lists them inline too.
+            val text = info.params.joinToString(", ") { param ->
+                val value = state.params[info.name]?.get(param.name) ?: param.default
+                "${param.name}=$value"
+            }
+            summary.visibility = if (info.params.isEmpty()) View.GONE else View.VISIBLE
+            summary.text = text
 
             // No parameters to edit — the whole row just toggles.
             if (info.params.isEmpty()) return

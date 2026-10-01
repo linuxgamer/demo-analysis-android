@@ -1,5 +1,7 @@
 package com.tf2demo.analyzer
 
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.net.Uri
 import android.os.Bundle
 import android.provider.OpenableColumns
@@ -7,8 +9,11 @@ import android.view.View
 import android.widget.Button
 import android.widget.ProgressBar
 import android.widget.TextView
+import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -35,7 +40,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var status: TextView
     private lateinit var demoInfoCard: View
     private lateinit var infoMap: TextView
-    private lateinit var infoDetails: TextView
+    private lateinit var infoAuthor: TextView
+    private lateinit var infoServer: TextView
     private lateinit var infoCounts: TextView
     private lateinit var detectionsHeader: TextView
     private lateinit var detectionsList: RecyclerView
@@ -57,6 +63,16 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        // targetSdk 35 enforces edge-to-edge: pad the content by the system
+        // bars' insets so nothing hides under the status bar or taskbar.
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.root)) { view, insets ->
+            val bars = insets.getInsets(
+                WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout()
+            )
+            view.setPadding(bars.left, bars.top, bars.right, bars.bottom)
+            WindowInsetsCompat.CONSUMED
+        }
+
         fileName = findViewById(R.id.fileName)
         analyzeButton = findViewById(R.id.analyzeButton)
         shareButton = findViewById(R.id.shareButton)
@@ -65,7 +81,8 @@ class MainActivity : AppCompatActivity() {
         status = findViewById(R.id.status)
         demoInfoCard = findViewById(R.id.demoInfoCard)
         infoMap = findViewById(R.id.infoMap)
-        infoDetails = findViewById(R.id.infoDetails)
+        infoAuthor = findViewById(R.id.infoAuthor)
+        infoServer = findViewById(R.id.infoServer)
         infoCounts = findViewById(R.id.infoCounts)
         detectionsHeader = findViewById(R.id.detectionsHeader)
         detectionsList = findViewById(R.id.detectionsList)
@@ -81,6 +98,16 @@ class MainActivity : AppCompatActivity() {
         findViewById<Button>(R.id.settingsButton).setOnClickListener {
             startActivity(android.content.Intent(this, SettingsActivity::class.java))
         }
+
+        // Author name and server IP copy on tap, value only.
+        infoAuthor.setOnClickListener { copyToClipboard(infoAuthor.tag as? String ?: return@setOnClickListener) }
+        infoServer.setOnClickListener { copyToClipboard(infoServer.tag as? String ?: return@setOnClickListener) }
+    }
+
+    private fun copyToClipboard(value: String) {
+        val clipboard = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
+        clipboard.setPrimaryClip(ClipData.newPlainText("value", value))
+        Toast.makeText(this, R.string.copied, Toast.LENGTH_SHORT).show()
     }
 
     private fun queryDisplayName(uri: Uri): String? =
@@ -153,12 +180,10 @@ class MainActivity : AppCompatActivity() {
         val seconds = tickCount / 66.67
 
         infoMap.text = root.optString("map", "?")
-        infoDetails.text = getString(
-            R.string.demo_details,
-            formatDuration(seconds),
-            root.optString("author", "?"),
-            root.optString("server_ip", "?"),
-        )
+        infoAuthor.text = getString(R.string.author_line, root.optString("author", "?"))
+        infoAuthor.tag = root.optString("author", "")
+        infoServer.text = getString(R.string.server_line, root.optString("server_ip", "?"))
+        infoServer.tag = root.optString("server_ip", "")
         demoInfoCard.visibility = View.VISIBLE
 
         val rows = buildList {
@@ -187,16 +212,7 @@ class MainActivity : AppCompatActivity() {
         detectionsHeader.text = getString(R.string.detections_count, rows.size)
         detectionsHeader.visibility = View.VISIBLE
         detectionsList.visibility = View.VISIBLE
-        detectionAdapter.submitList(rows)
-    }
-
-    private fun formatDuration(seconds: Double): String {
-        val total = seconds.toInt()
-        val hours = total / 3600
-        val minutes = (total % 3600) / 60
-        val secs = total % 60
-        return if (hours > 0) "%d:%02d:%02d".format(hours, minutes, secs)
-        else "%d:%02d".format(minutes, secs)
+        detectionAdapter.submit(rows)
     }
 
     private fun hideResults() {

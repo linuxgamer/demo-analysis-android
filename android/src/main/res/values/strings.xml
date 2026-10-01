@@ -8,8 +8,9 @@
     <string name="detections">Detections</string>
     <string name="detections_count">Detections: %1$d</string>
     <string name="no_detections">No detections</string>
-    <string name="demo_details">%1$s · author: %2$s · server: %3$s</string>
-    <string name="steamid_copied">SteamID copied</string>
+    <string name="author_line">Author: %1$s (tap to copy)</string>
+    <string name="server_line">Server: %1$s (tap to copy)</string>
+    <string name="copied">Copied</string>
     <string name="failed">Failed: %1$s</string>
     <string name="settings">Algorithms</string>
     <string name="import_params">Import</string>
