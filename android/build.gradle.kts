@@ -12,6 +12,16 @@ android {
         archivesName.set("demo-analysis-android")
     }
 
+    signingConfigs {
+        // The keystore is committed (standard Android debug credentials:
+        // password "android", alias "androiddebugkey") so that CI builds and
+        // local builds share one signature and update over each other without
+        // uninstalling. Never use this key for store publishing.
+        getByName("debug") {
+            storeFile = rootProject.file("signing/debug.keystore")
+        }
+    }
+
     defaultConfig {
         applicationId = "com.tf2demo.analyzer"
         minSdk = 26

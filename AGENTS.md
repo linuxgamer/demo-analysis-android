@@ -84,8 +84,10 @@ Clone sources land in:
   `println!`, built from public `CheatAnalyser` fields).
 - Kotlin: `DemoAnalysis.kt` (external funs), `MainActivity.kt` (SAF picker,
   `Dispatchers.IO`, progress polling 4x/s, JSON sharing).
-- The release build is signed with the debug key (`signingConfig = debug`) so
-  CI artifacts install out of the box; this is not a store release.
+- Signing: both build types use the keystore committed at `signing/debug.keystore`
+  (standard Android debug credentials: password "android", alias "androiddebugkey"),
+  so CI and local builds share one signature and update over each other without
+  uninstalling. Never use this key for store publishing.
 
 ## Build
 
