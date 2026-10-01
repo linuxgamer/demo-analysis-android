@@ -43,7 +43,7 @@ tar xzf jdk21.tar.gz && rm jdk21.tar.gz
 curl -sL -o gradle.zip "https://services.gradle.org/distributions/gradle-8.11.1-bin.zip"
 unzip -q gradle.zip && rm gradle.zip
 
-# wrapper генерируется один раз (уже лежит в app/, пересоздавать не нужно)
+# wrapper генерируется один раз (уже лежит в корне, пересоздавать не нужно)
 # JAVA_HOME=$HOME/tools/jdk-21.0.12.1+1 ~/tools/gradle-8.11.1/bin/gradle wrapper
 ```
 
@@ -59,13 +59,12 @@ export PATH="$HOME/.cargo/bin:$PATH"
 ## 5. Сборка
 
 ```bash
-cd app
-./gradlew :android:assembleDebug
+./gradlew :android:assembleDebug :android:assembleRelease
 adb install android/build/outputs/apk/debug/android-debug.apk
 ```
 
 ## Быстрая проверка без телефона
 
-JNI-слой можно гонять под host JVM: `cargo build` в `app/rust` и вызвать
+JNI-слой можно гонять под host JVM: `cargo build` в `rust/` и вызвать
 `libdemo_analysis_android.so` из Java-класса с теми же native-методами
 (`dev.stast.demodetector.DemoAnalysis`) — см. AGENTS.md.

@@ -11,7 +11,9 @@ crate-type = ["cdylib"]
 anyhow = "1"
 jni = "0.21"
 serde_json = "1"
-demo-analysis = { path = "../../tf2-demo-player-aio-main/demo-analysis" }
+# Git dependency pinned to a known commit: the package lives in a subdirectory of
+# the tf2-demo-player-aio workspace and is discovered by name.
+demo-analysis = { git = "https://github.com/eatthefreakingpaper/tf2-demo-player-aio", rev = "ad54b246d75d274d7b90a555846ae039e37970c3" }
 
 # rfd and opener are only referenced by demo-analysis's desktop gui binary, but as non-optional
 # dependencies they are still compiled for every target - and neither supports Android. Patched

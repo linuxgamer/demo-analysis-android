@@ -85,6 +85,7 @@ dependencies = [
 [[package]]
 name = "demo-analysis"
 version = "0.1.0"
+source = "git+https://github.com/eatthefreakingpaper/tf2-demo-player-aio?rev=ad54b246d75d274d7b90a555846ae039e37970c3#ad54b246d75d274d7b90a555846ae039e37970c3"
 dependencies = [
  "anyhow",
  "bitbuffer",

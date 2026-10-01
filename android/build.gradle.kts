@@ -25,6 +25,14 @@ android {
     kotlinOptions {
         jvmTarget = "17"
     }
+    buildTypes {
+        // Signed with the debug key so CI-produced release APKs are installable;
+        // no secrets to distribute, this build is not meant for store publishing.
+        release {
+            isMinifyEnabled = false
+            signingConfig = signingConfigs.getByName("debug")
+        }
+    }
     packaging {
         jniLibs {
             useLegacyPackaging = false
