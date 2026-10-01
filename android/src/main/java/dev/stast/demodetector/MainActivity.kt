@@ -78,6 +78,9 @@ class MainActivity : AppCompatActivity() {
         }
         analyzeButton.setOnClickListener { startAnalysis() }
         shareButton.setOnClickListener { shareResult() }
+        findViewById<Button>(R.id.settingsButton).setOnClickListener {
+            startActivity(android.content.Intent(this, SettingsActivity::class.java))
+        }
     }
 
     private fun queryDisplayName(uri: Uri): String? =
@@ -134,8 +137,13 @@ class MainActivity : AppCompatActivity() {
         // every path; detach here so neither the PFD finalizer nor we close it
         // a second time.
         val fd = pfd.detachFd()
-        val config = JSONObject().toString()
-        return DemoAnalysis.analyse(fd, arrayOf<String>(), config, threads = 2)
+        // Enabled set and parameter overrides from the settings screen; the
+        // Rust side normalizes the config (drops unknown entries, coerces
+        // number kinds) exactly like the desktop analyser does.
+        val state = SettingsStore.load(this, SettingsStore.schema(DemoAnalysis.algorithmsJson()))
+        val enabled = state.enabled.filterValues { it }.keys.toTypedArray()
+        val config = SettingsStore.paramsJson(state)
+        return DemoAnalysis.analyse(fd, enabled, config, threads = 2)
     }
 
     private fun showResult(json: String) {

@@ -11,4 +11,9 @@
     <string name="demo_details">%1$s · author: %2$s · server: %3$s</string>
     <string name="steamid_copied">SteamID copied</string>
     <string name="failed">Failed: %1$s</string>
+    <string name="settings">Algorithms</string>
+    <string name="import_params">Import</string>
+    <string name="export_params">Export</string>
+    <string name="imported">Parameters imported</string>
+    <string name="exported">params.json saved</string>
 </resources>
