@@ -1,4 +1,4 @@
-package dev.stast.demodetector
+package com.tf2demo.analyzer
 
 /**
  * Thin wrapper over the Rust JNI bridge. All methods are blocking and must be

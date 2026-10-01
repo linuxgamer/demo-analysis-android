@@ -1,4 +1,4 @@
-package dev.stast.demodetector
+package com.tf2demo.analyzer
 
 import android.content.ClipData
 import android.content.ClipboardManager

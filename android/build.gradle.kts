@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace = "dev.stast.demodetector"
+    namespace = "com.tf2demo.analyzer"
     compileSdk = 35
 
     // APK names: demo-analysis-android-<buildType>.apk instead of android-<buildType>.apk.
@@ -13,7 +13,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "dev.stast.demodetector"
+        applicationId = "com.tf2demo.analyzer"
         minSdk = 26
         targetSdk = 35
         versionCode = 1
