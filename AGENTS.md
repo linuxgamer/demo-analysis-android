@@ -89,7 +89,7 @@ Clone sources land in:
 
 ## Build
 
-Requirements: Rust + `aarch64-linux-android`/`x86_64-linux-android` targets,
+Requirements: Rust + `armv7-linux-androideabi`/`aarch64-linux-android`/`x86_64-linux-android` targets,
 `cargo-ndk`, Android SDK + NDK 27.0.12077973, **JDK 21** (Gradle 8.x rejects
 Java 27; on this machine the JDK lives in `~/tools/jdk-21.0.12.1+1`, the SDK
 in `~/Проекты/android-sdk`, exports already in `~/.bashrc`).

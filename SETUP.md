@@ -13,7 +13,7 @@ non-ASCII paths break Java properties files (`gradle.properties`,
 ```bash
 sudo pacman -S rustup          # or the rustup.rs installer
 rustup default stable
-rustup target add aarch64-linux-android x86_64-linux-android
+rustup target add armv7-linux-androideabi aarch64-linux-android x86_64-linux-android
 cargo install cargo-ndk        # lands in ~/.cargo/bin
 ```
 
@@ -62,7 +62,7 @@ export PATH="$HOME/.cargo/bin:$PATH"
 
 ```bash
 ./gradlew :android:assembleDebug :android:assembleRelease
-adb install android/build/outputs/apk/debug/android-debug.apk
+adb install android/build/outputs/apk/debug/demo-analysis-android-debug.apk
 ```
 
 ### Quick check without a phone
@@ -86,7 +86,7 @@ Android SDK в `~/Проекты/android-sdk`, JDK 21 и Gradle в `~/tools/`. �
 ```bash
 sudo pacman -S rustup          # или официальный установщик rustup.rs
 rustup default stable
-rustup target add aarch64-linux-android x86_64-linux-android
+rustup target add armv7-linux-androideabi aarch64-linux-android x86_64-linux-android
 cargo install cargo-ndk        # попадёт в ~/.cargo/bin
 ```
 
@@ -135,7 +135,7 @@ export PATH="$HOME/.cargo/bin:$PATH"
 
 ```bash
 ./gradlew :android:assembleDebug :android:assembleRelease
-adb install android/build/outputs/apk/debug/android-debug.apk
+adb install android/build/outputs/apk/debug/demo-analysis-android-debug.apk
 ```
 
 ### Быстрая проверка без телефона

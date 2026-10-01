@@ -23,7 +23,7 @@ desktop CLI.
 
 Open the latest `android` run in [Actions](../../actions/workflows/android.yml)
 and grab the **demo-analysis-android-apks** artifact — it contains
-`android-debug.apk` and a signed `android-release.apk` (both installable). On
+`demo-analysis-android-debug.apk` and a signed `demo-analysis-android-release.apk` (both installable). On
 `v*` tags the same APKs are attached to [Releases](../../releases).
 
 ## Layout
@@ -105,7 +105,7 @@ Rust-ядро (парсер демо + 16 алгоритмов-детектор�
 
 Зайди в [Actions](../../actions/workflows/android.yml), открой последний
 запуск `android` и скачай артефакт **demo-analysis-android-apks** — внутри
-`android-debug.apk` и подписанный `android-release.apk` (оба ставятся на
+`demo-analysis-android-debug.apk` и подписанный `demo-analysis-android-release.apk` (оба ставятся на
 устройство). На тегах `v*` те же APK прикладываются к
 [Releases](../../releases).
 

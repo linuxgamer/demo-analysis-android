@@ -7,6 +7,11 @@ android {
     namespace = "dev.stast.demodetector"
     compileSdk = 35
 
+    // APK names: demo-analysis-android-<buildType>.apk instead of android-<buildType>.apk.
+    base {
+        archivesName.set("demo-analysis-android")
+    }
+
     defaultConfig {
         applicationId = "dev.stast.demodetector"
         minSdk = 26
@@ -14,7 +19,8 @@ android {
         versionCode = 1
         versionName = "0.1.0"
         ndk {
-            abiFilters += listOf("arm64-v8a", "x86_64")
+            // Universal APK: 64-bit ARM, 32-bit ARM and x86_64 (emulators).
+            abiFilters += listOf("armeabi-v7a", "arm64-v8a", "x86_64")
         }
     }
 
@@ -43,7 +49,7 @@ android {
 // Cross-compiles the Rust JNI library into src/main/jniLibs; AGP picks the
 // .so files up from there automatically. Requires cargo-ndk on PATH and
 // ANDROID_NDK_HOME (or ANDROID_HOME/ndk/<version>) pointing at the NDK.
-val cargoTargets = listOf("arm64-v8a", "x86_64")
+val cargoTargets = listOf("armeabi-v7a", "arm64-v8a", "x86_64")
 val cargoArgs = mutableListOf("cargo", "ndk")
 cargoTargets.forEach { cargoArgs += listOf("-t", it) }
 cargoArgs += listOf("--platform", "26", "-o", layout.projectDirectory.dir("src/main/jniLibs").asFile.absolutePath)
