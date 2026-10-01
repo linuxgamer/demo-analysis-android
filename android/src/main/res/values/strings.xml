@@ -1,9 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">TF2DemoAnalyzer</string>
-    <string name="pick_demo">Pick demo file</string>
+    <string name="pick_demo">Pick demo</string>
     <string name="analyze">Analyze</string>
-    <string name="working">Analyzing…</string>
     <string name="idle">Pick a .dem file to begin</string>
     <string name="share_json">Share JSON</string>
+    <string name="detections">Detections</string>
+    <string name="detections_count">Detections: %1$d</string>
+    <string name="no_detections">No detections</string>
+    <string name="demo_details">%1$s · author: %2$s · server: %3$s</string>
+    <string name="steamid_copied">SteamID copied</string>
+    <string name="failed">Failed: %1$s</string>
 </resources>

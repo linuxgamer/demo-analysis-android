@@ -3,16 +3,19 @@ package dev.stast.demodetector
 import android.net.Uri
 import android.os.Bundle
 import android.provider.OpenableColumns
+import android.view.View
 import android.widget.Button
 import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
@@ -30,6 +33,13 @@ class MainActivity : AppCompatActivity() {
     private lateinit var progressLabel: TextView
     private lateinit var progressBar: ProgressBar
     private lateinit var status: TextView
+    private lateinit var demoInfoCard: View
+    private lateinit var infoMap: TextView
+    private lateinit var infoDetails: TextView
+    private lateinit var infoCounts: TextView
+    private lateinit var detectionsHeader: TextView
+    private lateinit var detectionsList: RecyclerView
+    private val detectionAdapter = DetectionAdapter()
 
     private val pickDemo =
         registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
@@ -39,6 +49,7 @@ class MainActivity : AppCompatActivity() {
                 fileName.text = pickedName ?: uri.lastPathSegment
                 analyzeButton.isEnabled = true
                 status.text = ""
+                hideResults()
             }
         }
 
@@ -52,6 +63,15 @@ class MainActivity : AppCompatActivity() {
         progressLabel = findViewById(R.id.progressLabel)
         progressBar = findViewById(R.id.progressBar)
         status = findViewById(R.id.status)
+        demoInfoCard = findViewById(R.id.demoInfoCard)
+        infoMap = findViewById(R.id.infoMap)
+        infoDetails = findViewById(R.id.infoDetails)
+        infoCounts = findViewById(R.id.infoCounts)
+        detectionsHeader = findViewById(R.id.detectionsHeader)
+        detectionsList = findViewById(R.id.detectionsList)
+
+        detectionsList.layoutManager = LinearLayoutManager(this)
+        detectionsList.adapter = detectionAdapter
 
         findViewById<Button>(R.id.pickButton).setOnClickListener {
             pickDemo.launch(arrayOf("*/*"))
@@ -71,6 +91,7 @@ class MainActivity : AppCompatActivity() {
         analysisJob?.cancel()
         lastResult = null
         shareButton.isEnabled = false
+        hideResults()
         setProgressVisible(true)
         progressBar.progress = 0
         status.text = ""
@@ -97,11 +118,11 @@ class MainActivity : AppCompatActivity() {
             outcome
                 .onSuccess { json ->
                     lastResult = json
-                    status.text = summarize(json)
+                    showResult(json)
                     shareButton.isEnabled = true
                 }
                 .onFailure { e ->
-                    status.text = "Failed: ${e.message}"
+                    status.text = getString(R.string.failed, e.message)
                 }
         }
     }
@@ -117,20 +138,63 @@ class MainActivity : AppCompatActivity() {
         return DemoAnalysis.analyse(fd, arrayOf<String>(), config, threads = 2)
     }
 
-    private fun summarize(json: String): String {
+    private fun showResult(json: String) {
         val root = JSONObject(json)
-        val detections = root.optJSONArray("detections") ?: return "0 detections"
-        val byAlgorithm = linkedMapOf<String, Int>()
-        for (i in 0 until detections.length()) {
-            val algorithm = detections.getJSONObject(i).getString("algorithm")
-            byAlgorithm[algorithm] = (byAlgorithm[algorithm] ?: 0) + 1
+        val detections = root.optJSONArray("detections")
+        val tickCount = root.optInt("duration", 0)
+        val seconds = tickCount / 66.67
+
+        infoMap.text = root.optString("map", "?")
+        infoDetails.text = getString(
+            R.string.demo_details,
+            formatDuration(seconds),
+            root.optString("author", "?"),
+            root.optString("server_ip", "?"),
+        )
+        demoInfoCard.visibility = View.VISIBLE
+
+        val rows = buildList {
+            if (detections != null) {
+                for (i in 0 until detections.length()) {
+                    val item = detections.getJSONObject(i)
+                    add(
+                        DetectionRow(
+                            tick = item.optInt("tick", 0),
+                            algorithm = item.getString("algorithm"),
+                            steamId = item.optLong("player", 0).toString(),
+                        )
+                    )
+                }
+            }
         }
-        val map = root.optString("map", "?")
-        val summary = buildString {
-            appendLine("Map: $map — ${detections.length()} detections")
-            byAlgorithm.forEach { (algorithm, count) -> appendLine("  $algorithm: $count") }
+        // Per-algorithm counts, most frequent first — desktop shows the same breakdown.
+        val counts = rows.groupingBy { it.algorithm }.eachCount().entries
+            .sortedByDescending { it.value }
+        infoCounts.text = if (rows.isEmpty()) {
+            getString(R.string.no_detections)
+        } else {
+            counts.joinToString("\n") { (algorithm, count) -> "• $algorithm — $count" }
         }
-        return summary.trimEnd()
+
+        detectionsHeader.text = getString(R.string.detections_count, rows.size)
+        detectionsHeader.visibility = View.VISIBLE
+        detectionsList.visibility = View.VISIBLE
+        detectionAdapter.submitList(rows)
+    }
+
+    private fun formatDuration(seconds: Double): String {
+        val total = seconds.toInt()
+        val hours = total / 3600
+        val minutes = (total % 3600) / 60
+        val secs = total % 60
+        return if (hours > 0) "%d:%02d:%02d".format(hours, minutes, secs)
+        else "%d:%02d".format(minutes, secs)
+    }
+
+    private fun hideResults() {
+        demoInfoCard.visibility = View.GONE
+        detectionsHeader.visibility = View.GONE
+        detectionsList.visibility = View.GONE
     }
 
     private fun shareResult() {
@@ -139,7 +203,7 @@ class MainActivity : AppCompatActivity() {
             type = "application/json"
             putExtra(android.content.Intent.EXTRA_TEXT, json)
         }
-        startActivity(android.content.Intent.createChooser(intent, "Detections JSON"))
+        startActivity(android.content.Intent.createChooser(intent, getString(R.string.share_json)))
     }
 
     private fun setProgressVisible(visible: Boolean) {
