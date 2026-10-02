@@ -11,6 +11,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
 /** One detection: tick, algorithm, the player's SteamID64 and its data payload. */
 data class DetectionRow(
@@ -35,8 +36,28 @@ class DetectionAdapter(
     /** Player-row action button: open the profile on the remembered site. */
     var onOpenProfile: ((String) -> Unit)? = null
 
-    /** Player-row button long-press: force the site chooser even if remembered. */
-    var onChooseProfile: ((String) -> Unit)? = null
+    /** Algorithm-row long-press: show what this detector looks for. */
+    var onAlgorithmInfo: ((String) -> Unit)? = null
+
+    /** Long descriptions for algorithm groups, keyed by algorithm name. */
+    val algorithmDescriptions = mutableMapOf(
+        "viewangles_180degrees" to R.string.algo_180,
+        "nocrex/oob_pitch" to R.string.algo_oob_pitch,
+        "nocrex/angle_repeat" to R.string.algo_angle_repeat,
+        "nocrex/aimsnap" to R.string.algo_aimsnap,
+        "angle_history" to R.string.algo_angle_history,
+        "backtrack" to R.string.algo_backtrack,
+        "double_tap" to R.string.algo_double_tap,
+        "triggerbot" to R.string.algo_triggerbot,
+        "firewindow" to R.string.algo_firewindow,
+        "recorder_aim_assist" to R.string.algo_recorder,
+        "fidoo/silent_aim" to R.string.algo_silent_aim,
+        "fidoo/psilent4" to R.string.algo_psilent,
+        "fidoo/nospread" to R.string.algo_nospread,
+        "fidoo/auto_backstab" to R.string.algo_auto_backstab,
+        "fidoo/bunnyhop" to R.string.algo_bunnyhop,
+        "fidoo/invalid_equip_region" to R.string.algo_equip_region,
+    )
 
     sealed class Item {
         /** Expandable row (player or algorithm group). */
@@ -181,13 +202,20 @@ class DetectionAdapter(
                     view.isPressed = false
                     onOpenProfile?.invoke(group.copyValue)
                 }
-                action.setOnLongClickListener {
-                    onChooseProfile?.invoke(group.copyValue)
-                    true
-                }
             } else {
                 itemView.isLongClickable = false
                 action.visibility = View.GONE
+                // Algorithm rows: long-press explains the detector.
+                itemView.setOnLongClickListener { view ->
+                    algorithmDescriptions[group.key]?.let { resId ->
+                        MaterialAlertDialogBuilder(view.context)
+                            .setTitle(group.label)
+                            .setMessage(resId)
+                            .setPositiveButton(android.R.string.ok, null)
+                            .show()
+                    }
+                    algorithmDescriptions.containsKey(group.key)
+                }
             }
             itemView.setOnClickListener { view ->
                 val target = if (group.expanded) 0f else 90f

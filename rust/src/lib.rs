@@ -67,7 +67,7 @@ pub extern "system" fn Java_com_tf2demo_analyzer_DemoAnalysis_version<'local>(
 // Full algorithm registry for the settings UI: name, default flag and the
 // parameter schema. Dev algorithms are excluded; they make no sense on Android.
 #[no_mangle]
-pub extern "system" fn Java_com_tf2demo_analyzer_DemoAnalysis_algorithmsJson<'local>(
+pub extern "system" fn Java_com_tf2demo_analyzer_DemoAnalysis_algorithmsJsonRaw<'local>(
     mut env: JNIEnv<'local>,
     _class: JClass<'local>,
 ) -> jstring {

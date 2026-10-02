@@ -48,6 +48,7 @@ class SettingsActivity : AppCompatActivity() {
         AppearanceStore.applySystemBarTheme(this)
 
         setupAppearance()
+        setupLanguage()
 
         val schema = SettingsStore.schema(DemoAnalysis.algorithmsJson())
         state = SettingsStore.load(this, schema)
@@ -131,7 +132,13 @@ class SettingsActivity : AppCompatActivity() {
         val group =
             findViewById<com.google.android.material.button.MaterialButtonToggleGroup>(groupId)
         options.forEach { option ->
-            val button = com.google.android.material.button.MaterialButton(this).apply {
+            // Explicit outlined style: buttons created in code default to the
+            // filled style, which clashes with the XML-defined toggle groups.
+            val button = com.google.android.material.button.MaterialButton(
+                this,
+                null,
+                com.google.android.material.R.attr.materialButtonOutlinedStyle,
+            ).apply {
                 text = label(option)
                 tag = option
                 isChecked = option == current
@@ -158,6 +165,28 @@ class SettingsActivity : AppCompatActivity() {
             SettingsStore.threads(this),
             label = { it.toString() },
         ) { SettingsStore.setThreads(this, it) }
+
+    /** System / English / Russian per-app language, applied via AppCompat. */
+    private fun setupLanguage() {
+        val current = androidx.appcompat.app.AppCompatDelegate
+            .getApplicationLocales()
+            .toLanguageTags()
+        val options = listOf(
+            "" to getString(R.string.language_system),
+            "en" to "English",
+            "ru" to "Русский",
+        )
+        fillToggleGroup(
+            R.id.languageGroup,
+            options,
+            options.firstOrNull { it.first == current } ?: options.first(),
+            label = { it.second },
+        ) { pair ->
+            androidx.appcompat.app.AppCompatDelegate.setApplicationLocales(
+                androidx.core.os.LocaleListCompat.forLanguageTags(pair.first),
+            )
+        }
+    }
 
     private fun setupMaxSize() =
         fillToggleGroup(

@@ -15,11 +15,11 @@ object AppearanceStore {
     const val MODE_LIGHT = 1
     const val MODE_DARK = 2
 
-    // Profile viewer sites; SITE_ASK (-1) shows the chooser every time.
-    const val SITE_ASK = -1
+    // Profile viewer sites; the stored value is the index into PROFILE_SITES.
     const val SITE_STEAM = 0
     const val SITE_STEAMHISTORY = 1
     const val SITE_SHADEFALL = 2
+    val PROFILE_SITES = listOf(SITE_STEAM, SITE_STEAMHISTORY, SITE_SHADEFALL)
 
     private const val PREFS = "appearance"
     private const val KEY_MODE = "theme_mode"
@@ -34,8 +34,9 @@ object AppearanceStore {
         prefs(context).edit().putInt(KEY_MODE, mode).apply()
     }
 
+    /** Which site player rows open; defaults to Steam. */
     fun profileSite(context: Context): Int =
-        prefs(context).getInt(KEY_PROFILE_SITE, SITE_ASK)
+        prefs(context).getInt(KEY_PROFILE_SITE, SITE_STEAM)
 
     fun setProfileSite(context: Context, site: Int) {
         prefs(context).edit().putInt(KEY_PROFILE_SITE, site).apply()

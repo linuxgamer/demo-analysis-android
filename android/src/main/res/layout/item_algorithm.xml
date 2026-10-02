@@ -12,22 +12,22 @@
         android:gravity="center_vertical"
         android:orientation="horizontal">
 
+        <ImageView
+            android:id="@+id/paramsButton"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_marginEnd="4dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/params"
+            android:scaleType="center"
+            android:src="@drawable/ic_gear" />
+
         <com.google.android.material.materialswitch.MaterialSwitch
             android:id="@+id/algorithmSwitch"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:textAppearance="?attr/textAppearanceBodyMedium" />
-
-        <ImageView
-            android:id="@+id/paramsButton"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:layout_marginStart="4dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="@string/params"
-            android:scaleType="center"
-            android:src="@drawable/ic_gear" />
     </LinearLayout>
 
     <TextView

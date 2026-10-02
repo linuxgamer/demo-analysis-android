@@ -47,20 +47,13 @@ class MainActivity : AppCompatActivity() {
     private lateinit var detectionsHeader: TextView
     private lateinit var detectionsList: RecyclerView
     private lateinit var progressArea: View
+    private lateinit var progressBar: android.widget.ProgressBar
     private lateinit var progressLabel: TextView
     private val detectionAdapter = DetectionAdapter(playerNames = emptyMap())
 
     private val pickDemo =
         registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
             if (uri != null) {
-                // Persist the read grant so history re-runs survive reboots
-                // (the system allows ~128 persisted grants per app).
-                runCatching {
-                    contentResolver.takePersistableUriPermission(
-                        uri,
-                        android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION,
-                    )
-                }
                 pickedUri = uri
                 queryDemoInfo(uri)
                 analyzeButton.isEnabled = true
@@ -110,12 +103,14 @@ class MainActivity : AppCompatActivity() {
         detectionsHeader = findViewById(R.id.detectionsHeader)
         detectionsList = findViewById(R.id.detectionsList)
         progressArea = findViewById(R.id.progressArea)
+        progressBar = findViewById(R.id.progressBar)
         progressLabel = findViewById(R.id.progressLabel)
 
         detectionsList.layoutManager = LinearLayoutManager(this)
         detectionsList.adapter = detectionAdapter
-        detectionAdapter.onOpenProfile = { steamId -> openProfile(steamId, ask = false) }
-        detectionAdapter.onChooseProfile = { steamId -> openProfile(steamId, ask = true) }
+        detectionAdapter.onOpenProfile = { steamId ->
+            profileUrl(AppearanceStore.profileSite(this), steamId)?.let { openUrl(it) }
+        }
         detectionAdapter.onTickDetails = { dataJson ->
             if (!dataJson.isNullOrEmpty()) showTickDetails(dataJson)
         }
@@ -141,12 +136,6 @@ class MainActivity : AppCompatActivity() {
             (view.tag as? String)?.let { DetectionAdapter.copyToClipboard(view.context, it) }
             true
         }
-
-        findViewById<TextView>(R.id.historyClear).setOnClickListener {
-            HistoryStore.clear(this)
-            refreshHistory()
-        }
-        refreshHistory()
 
         // Re-render whatever phase the VM is in (also right after a rotation).
         lifecycleScope.launch {
@@ -175,54 +164,6 @@ class MainActivity : AppCompatActivity() {
         else -> super.onOptionsItemSelected(item)
     }
 
-    /** Recent analyses, shown while no demo is picked; tap re-runs one. */
-    private fun refreshHistory() {
-        val entries = HistoryStore.load(this)
-        val container = findViewById<android.widget.LinearLayout>(R.id.historyList)
-        container.removeAllViews()
-        val empty = entries.isEmpty() || pickedUri != null
-        container.visibility = if (empty) View.GONE else View.VISIBLE
-        findViewById<View>(R.id.historyHeader).visibility =
-            if (empty) View.GONE else View.VISIBLE
-        findViewById<View>(R.id.historyClear).visibility =
-            if (empty) View.GONE else View.VISIBLE
-        if (empty) return
-
-        val inflater = android.view.LayoutInflater.from(this)
-        entries.forEach { entry ->
-            val view = inflater.inflate(R.layout.item_history, container, false)
-            view.findViewById<TextView>(R.id.historyName).text = entry.name
-            view.findViewById<TextView>(R.id.historyMeta).text = getString(
-                R.string.history_meta,
-                entry.detections,
-                SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.getDefault())
-                    .format(Date(entry.analyzedAt)),
-            )
-            view.setOnClickListener { onHistoryPicked(entry) }
-            container.addView(view)
-        }
-    }
-
-    /** Re-pick a history entry; the SAF grant may have expired by now. */
-    private fun onHistoryPicked(entry: HistoryStore.Entry) {
-        val uri = Uri.parse(entry.uri)
-        runCatching {
-            contentResolver.openFileDescriptor(uri, "r")?.close()
-        }.onFailure {
-            // Grant expired: route through the picker instead of failing.
-            Toast.makeText(this, R.string.history_expired, Toast.LENGTH_SHORT).show()
-            pickDemo.launch(arrayOf("*/*"))
-            return
-        }
-        pickedUri = uri
-        pickedName = entry.name
-        queryDemoInfo(uri)
-        analyzeButton.isEnabled = true
-        status.text = ""
-        hideResults()
-        viewModel.start(uri)
-    }
-
     /** Profile site URLs; order must match AppearanceStore SITE_* constants. */
     private fun profileUrl(site: Int, steamId: String): String? = when (site) {
         AppearanceStore.SITE_STEAM -> "https://steamcommunity.com/profiles/$steamId"
@@ -243,34 +184,6 @@ class MainActivity : AppCompatActivity() {
                 DetectionAdapter.copyToClipboard(this, pretty)
             }
             .setNegativeButton(android.R.string.cancel, null)
-            .show()
-    }
-
-    private fun openProfile(steamId: String, ask: Boolean) {
-        val remembered = AppearanceStore.profileSite(this)
-        if (!ask && remembered != AppearanceStore.SITE_ASK) {
-            profileUrl(remembered, steamId)?.let { openUrl(it) }
-            return
-        }
-        var rememberChoice = AppearanceStore.profileSite(this) != AppearanceStore.SITE_ASK
-        val sites = listOf(
-            AppearanceStore.SITE_STEAM to getString(R.string.site_steam),
-            AppearanceStore.SITE_STEAMHISTORY to getString(R.string.site_steamhistory),
-            AppearanceStore.SITE_SHADEFALL to getString(R.string.site_shadefall),
-        )
-        com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
-            .setTitle(getString(R.string.open_profile) + " · " + steamId)
-            .setItems(sites.map { it.second }.toTypedArray()) { _, which ->
-                val site = sites[which].first
-                profileUrl(site, steamId)?.let { openUrl(it) }
-                // "Remember" was pre-selected from the last use of this dialog.
-                if (rememberChoice) AppearanceStore.setProfileSite(this, site)
-            }
-            .setMultiChoiceItems(
-                arrayOf(getString(R.string.remember)),
-                booleanArrayOf(AppearanceStore.profileSite(this) != AppearanceStore.SITE_ASK),
-            ) { _, _, checked -> rememberChoice = checked }
-            .setNegativeButton(R.string.just_once, null)
             .show()
     }
 
@@ -308,8 +221,17 @@ class MainActivity : AppCompatActivity() {
         when (phase) {
             is AnalysisViewModel.Phase.Running -> {
                 progressArea.visibility = View.VISIBLE
-                progressLabel.text =
-                    getString(R.string.progress_line, phase.ticks * 100 / phase.total, phase.ticks, phase.total)
+                // The initial phase carries (0, 0) before the first poll;
+                // total is the divisor, so only render once it is known.
+                if (phase.total > 0) {
+                    progressBar.progress = (phase.ticks * 1000L / phase.total).toInt()
+                    progressLabel.text = getString(
+                        R.string.progress_line,
+                        phase.ticks * 100 / phase.total,
+                        phase.ticks,
+                        phase.total,
+                    )
+                }
                 analyzeButton.isEnabled = false
                 cancelButton.visibility = View.VISIBLE
                 status.text = ""
@@ -321,11 +243,6 @@ class MainActivity : AppCompatActivity() {
                 analyzeButton.isEnabled = pickedUri != null
                 showResult(phase.json)
                 exportButton.isEnabled = true
-                viewModel.pickedUri?.let { uri ->
-                    HistoryStore.record(this, uri, pickedName ?: uri.lastPathSegment ?: uri.toString(),
-                        runCatching { JSONObject(phase.json).optJSONArray("detections")?.length() ?: 0 }
-                            .getOrDefault(0))
-                }
             }
 
             is AnalysisViewModel.Phase.Failed -> {
@@ -374,7 +291,6 @@ class MainActivity : AppCompatActivity() {
         infoTotal.visibility = View.GONE
         demoInfoCard.visibility = View.VISIBLE
         pickPlaceholder.visibility = View.GONE
-        refreshHistory()
     }
 
     private fun showResult(json: String) {
