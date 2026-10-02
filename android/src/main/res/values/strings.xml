@@ -3,6 +3,7 @@
     <string name="app_name">TF2DemoAnalyzer</string>
     <string name="pick_demo">Pick demo</string>
     <string name="analyze">Analyze!</string>
+    <string name="idle">Pick a demo file to begin — use "Pick demo" in the toolbar</string>
     <string name="export_detections">Export Detections to JSON</string>
     <string name="settings">Settings</string>
     <string name="author_line">Author: %1$s</string>

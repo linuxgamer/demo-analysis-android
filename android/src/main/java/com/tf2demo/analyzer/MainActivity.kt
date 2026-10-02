@@ -40,6 +40,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var analyzeButton: Button
     private lateinit var exportButton: Button
     private lateinit var status: TextView
+    private lateinit var pickPlaceholder: TextView
     private lateinit var demoInfoCard: View
     private lateinit var infoName: TextView
     private lateinit var infoAuthor: TextView
@@ -94,6 +95,7 @@ class MainActivity : AppCompatActivity() {
         analyzeButton = findViewById(R.id.analyzeButton)
         exportButton = findViewById(R.id.exportButton)
         status = findViewById(R.id.status)
+        pickPlaceholder = findViewById(R.id.pickPlaceholder)
         demoInfoCard = findViewById(R.id.demoInfoCard)
         infoName = findViewById(R.id.infoName)
         infoAuthor = findViewById(R.id.infoAuthor)
@@ -153,10 +155,15 @@ class MainActivity : AppCompatActivity() {
         infoCreated.text = pickedLastModified.takeIf { it > 0 }?.let {
             getString(
                 R.string.created_line,
-                SimpleDateFormat("HH:mm dd/MMMM/yyyy", Locale.getDefault()).format(Date(it)),
+                SimpleDateFormat("HH:mm, dd.MM.yyyy", Locale.getDefault()).format(Date(it)),
             )
         }
+        // Before the analysis runs, only the creation time is known.
+        infoAuthor.visibility = View.GONE
+        infoAuthorSteamid.visibility = View.GONE
+        infoTotal.visibility = View.GONE
         demoInfoCard.visibility = View.VISIBLE
+        pickPlaceholder.visibility = View.GONE
     }
 
     private fun startAnalysis() {
@@ -172,15 +179,20 @@ class MainActivity : AppCompatActivity() {
 
         DemoAnalysis.resetProgress()
         // Progress polling runs while the blocking JNI call churns on Dispatchers.IO.
+        // Both workers write the same global counter, so the polled value
+        // oscillates between their positions; display a monotonic maximum
+        // instead, otherwise the percentage jumps backwards (60% -> 42%).
+        var shownTicks = 0
         analysisJob = lifecycleScope.launch {
             val poller = launch {
                 while (isActive) {
                     val current = DemoAnalysis.progressCurrent()
                     val total = DemoAnalysis.progressTotal()
                     if (total > 0) {
-                        val percent = (current * 100 / total).toInt()
-                        progressBar.progress = (current * 1000L / total).toInt()
-                        progressLabel.text = getString(R.string.progress_line, percent, current, total)
+                        shownTicks = maxOf(shownTicks, current)
+                        progressBar.progress = (shownTicks * 1000L / total).toInt()
+                        progressLabel.text =
+                            getString(R.string.progress_line, shownTicks * 100 / total, shownTicks, total)
                     }
                     delay(250)
                 }
@@ -230,6 +242,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         infoAuthor.text = getString(R.string.author_line, root.optString("author", "?"))
+        infoAuthor.visibility = View.VISIBLE
         infoAuthor.setOnClickListener { view ->
             root.optString("author", "").takeIf { it.isNotEmpty() }?.let {
                 DetectionAdapter.copyToClipboard(view.context, it)
@@ -261,7 +274,9 @@ class MainActivity : AppCompatActivity() {
         }
 
         infoTotal.text = getString(R.string.total_line, rows.size)
-        detectionsHeader.text = getString(R.string.detections_count, rows.size)
+        infoTotal.visibility = View.VISIBLE
+        infoName.visibility = View.VISIBLE
+        detectionsHeader.text = getString(R.string.detections)
         detectionsPanel.visibility = View.VISIBLE
         detectionAdapter.playerNames = playerNames
         detectionAdapter.submit(rows)

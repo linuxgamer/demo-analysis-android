@@ -94,7 +94,7 @@ class DetectionAdapter(
                     )
                     if (key in expandedAlgorithms) {
                         detections.forEachIndexed { index, row ->
-                            add(Item.Entry("${index + 1}. tick ${row.tick}"))
+                            add(Item.Entry("${index + 1}. ${row.tick}"))
                         }
                     }
                 }
@@ -134,6 +134,15 @@ class DetectionAdapter(
         fun bind(group: Item.Group) {
             name.text = group.label
             meta.text = group.meta
+            // Algorithm groups sit one level to the right of player rows.
+            val density = itemView.resources.displayMetrics.density
+            val indentDp = if (group.key.startsWith("a")) 28 else 4
+            itemView.setPaddingRelative(
+                (indentDp * density).toInt(),
+                itemView.paddingTop,
+                itemView.paddingEnd,
+                itemView.paddingBottom,
+            )
             // The glyph is always a right-pointing triangle; expansion is the
             // rotation. Recycled rows get the final rotation without animation.
             chevron.rotation = if (group.expanded) 90f else 0f
