@@ -6,6 +6,8 @@ import android.widget.Button
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 
@@ -28,8 +30,24 @@ class SettingsActivity : AppCompatActivity() {
         }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // The AMOLED overlay must be set before any content is inflated.
+        if (AppearanceStore.amoled(this) && isDarkUi()) {
+            setTheme(R.style.Theme_TF2DemoAnalyzer_AMOLED)
+        }
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_settings)
+
+        // Same edge-to-edge handling as the main screen: pad by the system
+        // bars' insets so the list doesn't render under the status/task bars.
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.settingsRoot)) { view, insets ->
+            val bars = insets.getInsets(
+                WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout()
+            )
+            view.setPadding(bars.left, bars.top, bars.right, bars.bottom)
+            WindowInsetsCompat.CONSUMED
+        }
+
+        setupAppearance()
 
         val schema = SettingsStore.schema(DemoAnalysis.algorithmsJson())
         state = SettingsStore.load(this, schema)
@@ -45,6 +63,53 @@ class SettingsActivity : AppCompatActivity() {
         }
         findViewById<Button>(R.id.exportButton).setOnClickListener {
             exportParams.launch("params.json")
+        }
+    }
+
+    private fun setupAppearance() {
+        val mode = AppearanceStore.themeMode(this)
+        val themeGroup =
+            findViewById<com.google.android.material.button.MaterialButtonToggleGroup>(R.id.themeGroup)
+        themeGroup.check(
+            when (mode) {
+                AppearanceStore.MODE_LIGHT -> R.id.themeLight
+                AppearanceStore.MODE_DARK -> R.id.themeDark
+                else -> R.id.themeSystem
+            }
+        )
+        themeGroup.addOnButtonCheckedListener { _, checkedId, isChecked ->
+            if (!isChecked) return@addOnButtonCheckedListener
+            val newMode = when (checkedId) {
+                R.id.themeLight -> AppearanceStore.MODE_LIGHT
+                R.id.themeDark -> AppearanceStore.MODE_DARK
+                else -> AppearanceStore.MODE_SYSTEM
+            }
+            AppearanceStore.setThemeMode(this, newMode)
+            // Mode change is process-wide; recreate so this screen re-reads it.
+            (application as AnalyzerApp).applyTheme()
+            recreate()
+        }
+
+        val amoled = findViewById<com.google.android.material.materialswitch.MaterialSwitch>(
+            R.id.amoledSwitch
+        )
+        amoled.isChecked = AppearanceStore.amoled(this)
+        amoled.setOnCheckedChangeListener { _, checked ->
+            AppearanceStore.setAmoled(this, checked)
+            recreate()
+        }
+    }
+
+    /** True when the current configuration resolves to a dark UI. */
+    private fun isDarkUi(): Boolean {
+        val mode = AppearanceStore.themeMode(this)
+        val systemDark =
+            (resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK) ==
+                android.content.res.Configuration.UI_MODE_NIGHT_YES
+        return when (mode) {
+            AppearanceStore.MODE_DARK -> true
+            AppearanceStore.MODE_LIGHT -> false
+            else -> systemDark
         }
     }
 

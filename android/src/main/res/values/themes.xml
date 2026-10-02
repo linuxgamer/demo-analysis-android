@@ -1,8 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Concept: black background, white text/controls. Material3 dark as the base. -->
+    <!-- Theme follows the system (DayNight); AMOLED is an overlay applied at
+         runtime when enabled and the UI is dark. -->
     <style name="Theme.TF2DemoAnalyzer" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="android:windowBackground">@color/app_background</item>
-        <item name="colorSurface">@color/panel_background</item>
+        <item name="appBackgroundColor">@color/app_background</item>
+        <item name="appPanelColor">@color/panel_background</item>
+        <item name="appDetailColor">@color/detail_background</item>
+    </style>
+
+    <style name="Theme.TF2DemoAnalyzer.AMOLED">
+        <item name="android:windowBackground">@color/amoled_background</item>
+        <item name="appBackgroundColor">@color/amoled_background</item>
+        <item name="appPanelColor">@color/amoled_panel</item>
+        <item name="appDetailColor">@color/amoled_detail</item>
     </style>
 </resources>

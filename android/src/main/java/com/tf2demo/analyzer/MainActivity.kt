@@ -89,7 +89,6 @@ class MainActivity : AppCompatActivity() {
         }
 
         val toolbar = findViewById<Toolbar>(R.id.toolbar)
-        toolbar.setTitle(R.string.app_name)
         setSupportActionBar(toolbar)
 
         analyzeButton = findViewById(R.id.analyzeButton)

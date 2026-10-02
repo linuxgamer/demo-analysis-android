@@ -1,14 +1,27 @@
 package com.tf2demo.analyzer
 
 import android.app.Application
+import androidx.appcompat.app.AppCompatDelegate
 import com.google.android.material.color.DynamicColors
 
 class AnalyzerApp : Application() {
     override fun onCreate() {
         super.onCreate()
+        applyTheme()
         // Material You: apply a wallpaper-derived color scheme wherever the
         // system supports it (Android 12+); older versions keep the static
         // Material3 DayNight palette.
         DynamicColors.applyToActivitiesIfAvailable(this)
+    }
+
+    /** Reads the stored appearance preferences and applies them process-wide. */
+    fun applyTheme() {
+        AppCompatDelegate.setDefaultNightMode(
+            when (AppearanceStore.themeMode(this)) {
+                AppearanceStore.MODE_LIGHT -> AppCompatDelegate.MODE_NIGHT_NO
+                AppearanceStore.MODE_DARK -> AppCompatDelegate.MODE_NIGHT_YES
+                else -> AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
+            }
+        )
     }
 }

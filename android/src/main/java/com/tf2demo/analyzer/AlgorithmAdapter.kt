@@ -4,7 +4,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
-import android.widget.Switch
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -76,7 +75,8 @@ class AlgorithmAdapter(
                 val label = TextView(context).apply { text = "${param.name} ($kindLabel)" }
                 val current = state.params[info.name]?.get(param.name) ?: param.default
                 val editor: View = if (param.kind == SettingsStore.Kind.BOOL) {
-                    Switch(context).apply { isChecked = current as Boolean }
+                    com.google.android.material.materialswitch.MaterialSwitch(context)
+                        .apply { isChecked = current as Boolean }
                 } else {
                     EditText(context).apply {
                         setText(current.toString())
@@ -98,7 +98,8 @@ class AlgorithmAdapter(
                     for ((param, editor) in editors) {
                         when (param.kind) {
                             SettingsStore.Kind.BOOL ->
-                                target[param.name] = (editor as Switch).isChecked
+                                target[param.name] =
+                                    (editor as com.google.android.material.materialswitch.MaterialSwitch).isChecked
 
                             SettingsStore.Kind.INT -> (editor as EditText).text.toString()
                                 .toFloatOrNull()?.let { target[param.name] = it.toInt() }
