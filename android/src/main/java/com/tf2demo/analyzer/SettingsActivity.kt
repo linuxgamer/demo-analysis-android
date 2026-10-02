@@ -31,11 +31,6 @@ class SettingsActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // AMOLED overlay goes through applyStyle (not setTheme) so the
-        // Material You overlay applied before onCreate survives.
-        if (AppearanceStore.amoled(this) && AppearanceStore.isDarkUi(this)) {
-            theme.applyStyle(R.style.Theme_TF2DemoAnalyzer_AMOLED, true)
-        }
         setContentView(R.layout.activity_settings)
 
         findViewById<com.google.android.material.appbar.MaterialToolbar>(R.id.settingsToolbar)

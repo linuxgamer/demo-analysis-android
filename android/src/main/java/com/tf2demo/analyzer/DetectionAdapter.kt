@@ -6,6 +6,8 @@ import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.EditText
+import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.recyclerview.widget.RecyclerView
@@ -128,7 +130,7 @@ class DetectionAdapter(
     }
 
     inner class GroupHolder(view: View) : RecyclerView.ViewHolder(view) {
-        private val chevron = view.findViewById<TextView>(R.id.groupChevron)
+        private val chevron = view.findViewById<ImageView>(R.id.groupChevron)
         private val name = view.findViewById<TextView>(R.id.groupName)
         private val meta = view.findViewById<TextView>(R.id.groupMeta)
 

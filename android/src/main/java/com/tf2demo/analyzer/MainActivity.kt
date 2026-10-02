@@ -76,11 +76,6 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // AMOLED overlay goes through applyStyle (not setTheme) so the
-        // Material You overlay applied before onCreate survives.
-        if (AppearanceStore.amoled(this) && AppearanceStore.isDarkUi(this)) {
-            theme.applyStyle(R.style.Theme_TF2DemoAnalyzer_AMOLED, true)
-        }
         setContentView(R.layout.activity_main)
 
         // targetSdk 35 enforces edge-to-edge: pad by the system bars' insets so

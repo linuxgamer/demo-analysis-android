@@ -8,13 +8,12 @@
     android:paddingVertical="12dp"
     android:paddingHorizontal="4dp">
 
-    <TextView
+    <ImageView
         android:id="@+id/groupChevron"
         android:layout_width="24dp"
-        android:layout_height="wrap_content"
-        android:text="@string/chevron_collapsed"
-        android:textAlignment="center"
-        android:textAppearance="?attr/textAppearanceTitleSmall" />
+        android:layout_height="24dp"
+        android:contentDescription="@string/expand"
+        android:src="@drawable/ic_chevron" />
 
     <TextView
         android:id="@+id/groupName"

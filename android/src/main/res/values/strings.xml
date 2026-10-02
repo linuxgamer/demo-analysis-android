@@ -19,6 +19,7 @@
     <string name="no_detections">No detections</string>
     <string name="progress_line">%1$d%% — %2$,d / %3$,d ticks</string>
     <string name="chevron_collapsed">▶</string>
+    <string name="expand">Expand/collapse</string>
     <string name="copied">Copied</string>
     <string name="failed">Failed: %1$s</string>
     <string name="import_params">Import</string>

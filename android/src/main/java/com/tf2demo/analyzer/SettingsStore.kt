@@ -30,6 +30,11 @@ object SettingsStore {
         val params: List<ParamInfo>,
     )
 
+    // Algorithms the desktop disables by default but the app runs by default:
+    // on mobile every bit of signal counts, dev algorithms stay excluded by
+    // the Rust side regardless.
+    val FORCE_DEFAULT_ON = setOf("backtrack", "double_tap", "nocrex/aimsnap")
+
     class State(
         val enabled: MutableMap<String, Boolean> = mutableMapOf(),
         val params: MutableMap<String, MutableMap<String, Any>> = mutableMapOf(),
@@ -54,7 +59,8 @@ object SettingsStore {
             } ?: emptyList()
             AlgorithmInfo(
                 name = entry.getString("name"),
-                defaultEnabled = entry.optBoolean("default", false),
+                defaultEnabled = entry.optBoolean("default", false) ||
+                    FORCE_DEFAULT_ON.contains(entry.getString("name")),
                 params = params,
             )
         }.sortedBy { it.name }
