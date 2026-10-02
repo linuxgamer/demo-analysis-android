@@ -233,7 +233,7 @@ class MainActivity : AppCompatActivity() {
         val state = SettingsStore.load(this, SettingsStore.schema(DemoAnalysis.algorithmsJson()))
         val enabled = state.enabled.filterValues { it }.keys.toTypedArray()
         val config = SettingsStore.paramsJson(state)
-        return DemoAnalysis.analyse(fd, enabled, config, threads = 2)
+        return DemoAnalysis.analyse(fd, enabled, config, threads = SettingsStore.threads(this))
     }
 
     private fun showResult(json: String) {

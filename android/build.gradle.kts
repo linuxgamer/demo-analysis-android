@@ -29,8 +29,8 @@ android {
         versionCode = 8
         versionName = "0.8-beta"
         ndk {
-            // Universal APK: 64-bit ARM, 32-bit ARM and x86_64 (emulators).
-            abiFilters += listOf("armeabi-v7a", "arm64-v8a", "x86_64")
+            // Universal APK: both ARM flavors, 32-bit and 64-bit x86.
+            abiFilters += listOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
         }
     }
 
@@ -59,7 +59,7 @@ android {
 // Cross-compiles the Rust JNI library into src/main/jniLibs; AGP picks the
 // .so files up from there automatically. Requires cargo-ndk on PATH and
 // ANDROID_NDK_HOME (or ANDROID_HOME/ndk/<version>) pointing at the NDK.
-val cargoTargets = listOf("armeabi-v7a", "arm64-v8a", "x86_64")
+val cargoTargets = listOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
 val cargoArgs = mutableListOf("cargo", "ndk")
 cargoTargets.forEach { cargoArgs += listOf("-t", it) }
 cargoArgs += listOf("--platform", "26", "-o", layout.projectDirectory.dir("src/main/jniLibs").asFile.absolutePath)
@@ -86,4 +86,6 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
     // Minimal JSON parsing for the JNI bridge; avoids pulling in serde-kotlin mirrors.
     implementation("org.json:json:20240303")
+
+    testImplementation("junit:junit:4.13.2")
 }

@@ -32,8 +32,8 @@ desktop CLI.
   with the desktop analyser
   / настройки: тема + Material You, переключатели алгоритмов, диалоги
   параметров, импорт/экспорт `params.json` (совместим с десктопом)
-- Universal APK: `armeabi-v7a` + `arm64-v8a` + `x86_64`
-  / универсальный APK для трёх архитектур
+- Universal APK: `armeabi-v7a` + `arm64-v8a` + `x86` + `x86_64`
+  / универсальный APK для четырёх архитектур
 
 ## Download
 

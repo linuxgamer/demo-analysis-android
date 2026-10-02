@@ -124,17 +124,20 @@ export ANDROID_NDK_HOME="$ANDROID_HOME/ndk/27.0.12077973"
 ```
 
 - The `:android:buildRust` task runs `cargo-ndk` (armeabi-v7a + arm64-v8a +
-  x86_64, `--platform 26`) and drops the `.so` files into
-  `android/src/main/jniLibs` (not committed). APKs are universal (all three
+  x86 + x86_64, `--platform 26`) and drops the `.so` files into
+  `android/src/main/jniLibs` (not committed). APKs are universal (all four
   ABIs) and named `demo-analysis-android-<buildType>.apk` via
-  `base.archivesName`.
+  `base.archivesName`. The release `.so` gets LTO + strip from the
+  `[profile.release]` section in `rust/Cargo.toml` (upstream's own profile
+  section does not apply to dependency builds).
 - Quick core check without a device: `cargo check` in `rust/` (needs network —
   git dependency). For a JNI smoke test under a host JVM, see the session
   history: a class with the native methods of `com.tf2demo.analyzer.DemoAnalysis`
   plus `rust/target/debug/libdemo_analysis_android.so`.
 - CI does the same: `.github/workflows/android.yml` (ubuntu-latest, temurin 21,
-  ndk 27, cargo-ndk from taiki-e/install-action). It builds debug + release
-  and uploads both APKs as one artifact; tags attach them to a release.
+  ndk 27, cargo-ndk from taiki-e/install-action). It runs the Kotlin unit
+  tests, builds debug + release and uploads both APKs as one artifact; tags
+  attach them to a release.
 - Current version: v0.8-beta (`versionCode` 8).
 
 ## Platform constraints (important)

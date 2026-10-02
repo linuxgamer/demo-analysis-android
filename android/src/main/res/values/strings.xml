@@ -10,6 +10,9 @@
     <string name="back">Back</string>
     <string name="params">Parameters</string>
     <string name="algorithms">Algorithms</string>
+    <string name="threads">Worker threads</string>
+    <string name="reset">Reset algorithm settings</string>
+    <string name="reset_confirm">Return every algorithm switch and parameter to its default?</string>
     <string name="author_line">Author: %1$s</string>
     <string name="steamid_line">Author\'s SteamID: %1$s</string>
     <string name="created_line">Created: %1$s</string>

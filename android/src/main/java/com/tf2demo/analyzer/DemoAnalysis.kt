@@ -22,7 +22,21 @@ object DemoAnalysis {
      */
     external fun analyse(fd: Int, algorithms: Array<String>, config: String, threads: Int): String
 
-    external fun algorithmsJson(): String
+    /**
+     * Algorithm + parameter schema for the settings UI. The registry is fixed
+     * at build time, so the JSON is fetched once and cached; the JNI call is
+     * blocking, callers should be on a background thread.
+     */
+    fun algorithmsJson(): String {
+        if (cachedAlgorithmsJson == null) {
+            cachedAlgorithmsJson = algorithmsJsonRaw()
+        }
+        return cachedAlgorithmsJson!!
+    }
+
+    private var cachedAlgorithmsJson: String? = null
+    private external fun algorithmsJsonRaw(): String
+
     external fun progressCurrent(): Int
     external fun progressTotal(): Int
     external fun resetProgress()

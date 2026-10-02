@@ -7,6 +7,13 @@ edition = "2021"
 name = "demo_analysis_android"
 crate-type = ["cdylib"]
 
+# Upstream's LTO profile lives in its own manifest and does not carry over;
+# this one is what actually builds our cdylib.
+[profile.release]
+lto = true
+codegen-units = 1
+strip = true
+
 [dependencies]
 anyhow = "1"
 jni = "0.21"

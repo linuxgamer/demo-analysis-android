@@ -19,6 +19,26 @@ object SettingsStore {
     private const val PREFS = "settings"
     private const val KEY_ENABLED = "enabled"
     private const val KEY_PARAMS = "params"
+    private const val KEY_THREADS = "threads"
+
+    /** Valid worker counts for `analyse`; each worker re-reads the demo. */
+    val THREAD_OPTIONS = listOf(1, 2, 4)
+
+    fun threads(context: Context): Int {
+        val stored = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            .getInt(KEY_THREADS, 2)
+        return THREAD_OPTIONS.firstOrNull { it == stored } ?: 2
+    }
+
+    fun setThreads(context: Context, threads: Int) {
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            .edit().putInt(KEY_THREADS, threads).apply()
+    }
+
+    /** Clears algorithm settings: everything back to the defaults. */
+    fun reset(context: Context) {
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().clear().apply()
+    }
 
     enum class Kind { FLOAT, INT, BOOL }
 
@@ -132,7 +152,8 @@ object SettingsStore {
     /**
      * Merges an imported desktop `params.json` over the current state. Unknown
      * algorithms/parameters are kept in the state (harmless) but only known
-     * ones appear in the UI.
+     * ones appear in the UI. Numbers are normalized to Double/Int — org.json
+     * hands out BigDecimal, which nothing downstream understands.
      */
     fun importText(text: String, into: State) {
         val imported = JSONObject(text)
@@ -142,7 +163,8 @@ object SettingsStore {
             values.keys().asSequence().forEach { param ->
                 when (val value = values.get(param)) {
                     is Boolean -> target[param] = value
-                    is Number -> target[param] = value
+                    is Int -> target[param] = value
+                    is Number -> target[param] = value.toDouble()
                 }
             }
         }
@@ -150,7 +172,8 @@ object SettingsStore {
 
     private fun matchesKind(value: Any, kind: Kind): Boolean = when (kind) {
         Kind.BOOL -> value is Boolean
-        Kind.INT -> value is Int || (value is Long && value in Int.MIN_VALUE..Int.MAX_VALUE)
+        // Desktop accepts a float literal where an int is declared (`8.0`).
+        Kind.INT -> value is Int || (value is Double && Math.floor(value) == value)
         Kind.FLOAT -> value is Number && value !is Boolean
     }
 

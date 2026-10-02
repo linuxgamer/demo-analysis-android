@@ -13,7 +13,7 @@ non-ASCII paths break Java properties files (`gradle.properties`,
 ```bash
 sudo pacman -S rustup          # or the rustup.rs installer
 rustup default stable
-rustup target add armv7-linux-androideabi aarch64-linux-android x86_64-linux-android
+rustup target add armv7-linux-androideabi aarch64-linux-android i686-linux-android x86_64-linux-android
 cargo install cargo-ndk        # lands in ~/.cargo/bin
 ```
 
@@ -86,7 +86,7 @@ Android SDK в `~/Проекты/android-sdk`, JDK 21 и Gradle в `~/tools/`. �
 ```bash
 sudo pacman -S rustup          # или официальный установщик rustup.rs
 rustup default stable
-rustup target add armv7-linux-androideabi aarch64-linux-android x86_64-linux-android
+rustup target add armv7-linux-androideabi aarch64-linux-android i686-linux-android x86_64-linux-android
 cargo install cargo-ndk        # попадёт в ~/.cargo/bin
 ```
 

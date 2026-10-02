@@ -89,6 +89,53 @@ class SettingsActivity : AppCompatActivity() {
             (application as AnalyzerApp).applyTheme()
             recreate()
         }
+
+        setupThreads()
+        setupReset()
+    }
+
+    /** Worker-count selector; populates buttons from SettingsStore options. */
+    private fun setupThreads() {
+        val group =
+            findViewById<com.google.android.material.button.MaterialButtonToggleGroup>(R.id.threadsGroup)
+        val current = SettingsStore.threads(this)
+        for (threads in SettingsStore.THREAD_OPTIONS) {
+            val button = com.google.android.material.button.MaterialButton(this).apply {
+                text = threads.toString()
+                tag = threads
+                isChecked = threads == current
+            }
+            group.addView(
+                button,
+                android.view.ViewGroup.LayoutParams(
+                    android.view.ViewGroup.LayoutParams.WRAP_CONTENT,
+                    android.view.ViewGroup.LayoutParams.WRAP_CONTENT,
+                ),
+            )
+        }
+        group.addOnButtonCheckedListener { _, checkedId, isChecked ->
+            if (!isChecked) return@addOnButtonCheckedListener
+            findViewById<com.google.android.material.button.MaterialButton>(checkedId)
+                ?.tag?.toString()?.toIntOrNull()?.let { SettingsStore.setThreads(this, it) }
+        }
+    }
+
+    /** Confirm-then-clear for the algorithm settings. */
+    private fun setupReset() {
+        findViewById<android.widget.ImageButton>(R.id.resetButton).setOnClickListener {
+            com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
+                .setTitle(R.string.reset)
+                .setMessage(R.string.reset_confirm)
+                .setPositiveButton(android.R.string.ok) { _, _ ->
+                    SettingsStore.reset(this)
+                    val schema = SettingsStore.schema(DemoAnalysis.algorithmsJson())
+                    state = SettingsStore.load(this, schema)
+                    adapter = AlgorithmAdapter(schema, state) { SettingsStore.save(this, state) }
+                    findViewById<RecyclerView>(R.id.algorithmsList).adapter = adapter
+                }
+                .setNegativeButton(android.R.string.cancel, null)
+                .show()
+        }
     }
 
     /** True when the current configuration resolves to a dark UI. */

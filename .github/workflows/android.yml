@@ -16,7 +16,7 @@ jobs:
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: armv7-linux-androideabi,aarch64-linux-android,x86_64-linux-android
+          targets: armv7-linux-androideabi,aarch64-linux-android,i686-linux-android,x86_64-linux-android
 
       - name: Install cargo-ndk
         uses: taiki-e/install-action@v2
@@ -38,6 +38,9 @@ jobs:
       - name: Install NDK
         run: |
           yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "ndk;27.0.12077973" >/dev/null
+
+      - name: Run unit tests
+        run: ./gradlew :android:testDebugUnitTest --no-daemon
 
       - name: Build APKs (debug + release)
         run: |
