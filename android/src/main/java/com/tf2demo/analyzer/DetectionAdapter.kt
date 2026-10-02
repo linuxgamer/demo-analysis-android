@@ -35,8 +35,8 @@ class DetectionAdapter(
             val copyValue: String?,
         ) : Item()
 
-        /** Leaf row inside the gray detail area. */
-        class Entry(val text: String) : Item()
+        /** Leaf row inside the gray detail area; long-press copies its tick. */
+        class Entry(val text: String, val copyValue: String) : Item()
     }
 
     private data class PlayerNode(val steamId: Long, val algorithms: Map<String, List<DetectionRow>>)
@@ -94,7 +94,8 @@ class DetectionAdapter(
                     )
                     if (key in expandedAlgorithms) {
                         detections.forEachIndexed { index, row ->
-                            add(Item.Entry("${index + 1}. ${row.tick}"))
+                            // Copy copies the bare tick number, no ordinal prefix.
+                            add(Item.Entry("${index + 1}. ${row.tick}", row.tick.toString()))
                         }
                     }
                 }
@@ -142,8 +143,7 @@ class DetectionAdapter(
                 itemView.paddingTop,
                 itemView.paddingEnd,
                 itemView.paddingBottom,
-            )
-            // The glyph is always a right-pointing triangle; expansion is the
+            )            // The glyph is always a right-pointing triangle; expansion is the
             // rotation. Recycled rows get the final rotation without animation.
             chevron.rotation = if (group.expanded) 90f else 0f
             if (group.copyValue != null) {
@@ -168,6 +168,10 @@ class DetectionAdapter(
 
         fun bind(entry: Item.Entry) {
             label.text = entry.text
+            itemView.setOnLongClickListener {
+                DetectionAdapter.copyToClipboard(itemView.context, entry.copyValue)
+                true
+            }
         }
     }
 

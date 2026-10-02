@@ -87,7 +87,7 @@ class MainActivity : AppCompatActivity() {
             view.setPadding(bars.left, bars.top, bars.right, bars.bottom)
             WindowInsetsCompat.CONSUMED
         }
-
+        AppearanceStore.applySystemBarTheme(this)
         val toolbar = findViewById<Toolbar>(R.id.toolbar)
         setSupportActionBar(toolbar)
 
@@ -151,12 +151,16 @@ class MainActivity : AppCompatActivity() {
             }
         }
         infoName.text = pickedName ?: uri.lastPathSegment
+        // Copyable card values share one long-press handler; plain taps do
+        // nothing, matching the detections list behavior.
         infoCreated.text = pickedLastModified.takeIf { it > 0 }?.let {
             getString(
                 R.string.created_line,
                 SimpleDateFormat("HH:mm, dd.MM.yyyy", Locale.getDefault()).format(Date(it)),
             )
         }
+        infoCreated.tag = pickedLastModified.takeIf { it > 0 }
+            ?.let { SimpleDateFormat("HH:mm, dd.MM.yyyy", Locale.getDefault()).format(Date(it)) }
         // Before the analysis runs, only the creation time is known.
         infoAuthor.visibility = View.GONE
         infoAuthorSteamid.visibility = View.GONE
@@ -242,19 +246,25 @@ class MainActivity : AppCompatActivity() {
 
         infoAuthor.text = getString(R.string.author_line, root.optString("author", "?"))
         infoAuthor.visibility = View.VISIBLE
-        infoAuthor.setOnClickListener { view ->
+        infoAuthor.setOnLongClickListener { view ->
             root.optString("author", "").takeIf { it.isNotEmpty() }?.let {
                 DetectionAdapter.copyToClipboard(view.context, it)
             }
+            true
         }
         // Rust fills this only when the author nick maps to exactly one player.
         infoAuthorSteamid.visibility = View.GONE
         root.optLong("author_steamid", 0L).takeIf { it != 0L }?.let { steamId ->
             infoAuthorSteamid.text = getString(R.string.steamid_line, steamId)
             infoAuthorSteamid.visibility = View.VISIBLE
-            infoAuthorSteamid.setOnClickListener { view ->
+            infoAuthorSteamid.setOnLongClickListener { view ->
                 DetectionAdapter.copyToClipboard(view.context, steamId.toString())
+                true
             }
+        }
+        infoCreated.setOnLongClickListener { view ->
+            (view.tag as? String)?.let { DetectionAdapter.copyToClipboard(view.context, it) }
+            true
         }
 
         val rows = buildList {

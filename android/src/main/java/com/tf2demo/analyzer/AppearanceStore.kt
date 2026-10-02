@@ -1,7 +1,10 @@
 package com.tf2demo.analyzer
 
+import android.app.Activity
 import android.content.Context
 import android.content.SharedPreferences
+import android.content.res.Configuration
+import androidx.core.view.WindowCompat
 
 /**
  * Appearance preferences: theme mode (follow system / light / dark) and the
@@ -30,5 +33,33 @@ object AppearanceStore {
 
     fun setAmoled(context: Context, on: Boolean) {
         prefs(context).edit().putBoolean(KEY_AMOLED, on).apply()
+    }
+
+    /** True when the current configuration resolves to a dark UI. */
+    fun isDarkUi(context: Context): Boolean = when (themeMode(context)) {
+        MODE_DARK -> true
+        MODE_LIGHT -> false
+        else ->
+            (context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
+                Configuration.UI_MODE_NIGHT_YES
+    }
+
+    /**
+     * Makes the system bars match the app: transparent, with icon color
+     * derived from the resolved theme (dark icons on light backgrounds and
+     * vice versa), otherwise white status bar icons sit on white.
+     */
+    fun applySystemBarTheme(activity: Activity) {
+        val controller = WindowCompat.getInsetsController(
+            activity.window,
+            activity.window.decorView,
+        )
+        val dark = isDarkUi(activity)
+        controller.isAppearanceLightStatusBars = !dark
+        controller.isAppearanceLightNavigationBars = !dark
+        @Suppress("DEPRECATION")
+        activity.window.statusBarColor = android.graphics.Color.TRANSPARENT
+        @Suppress("DEPRECATION")
+        activity.window.navigationBarColor = android.graphics.Color.TRANSPARENT
     }
 }

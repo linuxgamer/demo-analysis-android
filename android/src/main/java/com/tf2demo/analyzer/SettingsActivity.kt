@@ -46,6 +46,7 @@ class SettingsActivity : AppCompatActivity() {
             view.setPadding(bars.left, bars.top, bars.right, bars.bottom)
             WindowInsetsCompat.CONSUMED
         }
+        AppearanceStore.applySystemBarTheme(this)
 
         setupAppearance()
 
