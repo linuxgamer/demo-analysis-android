@@ -12,8 +12,14 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.recyclerview.widget.RecyclerView
 
-/** One detection: tick, algorithm and the player's SteamID64. */
-data class DetectionRow(val tick: Int, val algorithm: String, val steamId: String)
+/** One detection: tick, algorithm, the player's SteamID64 and its data payload. */
+data class DetectionRow(
+    val tick: Int,
+    val algorithm: String,
+    val steamId: String,
+    /** Raw JSON of the detection's `data` object, for the details dialog. */
+    val dataJson: String? = null,
+)
 
 /**
  * Detection tree per the concept: top level — players (nickname, detection
@@ -44,7 +50,7 @@ class DetectionAdapter(
         ) : Item()
 
         /** Leaf row inside the gray detail area; long-press copies its tick. */
-        class Entry(val text: String, val copyValue: String) : Item()
+        class Entry(val text: String, val copyValue: String, val dataJson: String?) : Item()
     }
 
     private data class PlayerNode(val steamId: Long, val algorithms: Map<String, List<DetectionRow>>)
@@ -53,6 +59,9 @@ class DetectionAdapter(
     private val expandedPlayers = mutableSetOf<Long>()
     private val expandedAlgorithms = mutableSetOf<String>()
     private var items: List<Item> = emptyList()
+
+    /** Details dialog callback: tick row tapped. */
+    var onTickDetails: ((String?) -> Unit)? = null
 
     /** Replaces the dataset: players sorted by detection count, then nickname. */
     fun submit(rows: List<DetectionRow>) {
@@ -103,7 +112,13 @@ class DetectionAdapter(
                     if (key in expandedAlgorithms) {
                         detections.forEachIndexed { index, row ->
                             // Copy copies the bare tick number, no ordinal prefix.
-                            add(Item.Entry("${index + 1}. ${row.tick}", row.tick.toString()))
+                            add(
+                                Item.Entry(
+                                    "${index + 1}. ${row.tick}",
+                                    row.tick.toString(),
+                                    row.dataJson,
+                                )
+                            )
                         }
                     }
                 }
@@ -131,7 +146,7 @@ class DetectionAdapter(
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         when (val item = items[position]) {
             is Item.Group -> (holder as GroupHolder).bind(item)
-            is Item.Entry -> (holder as TickHolder).bind(item)
+            is Item.Entry -> (holder as TickHolder).bind(item, onTickDetails)
         }
     }
 
@@ -186,8 +201,9 @@ class DetectionAdapter(
     class TickHolder(view: View) : RecyclerView.ViewHolder(view) {
         private val label = view.findViewById<TextView>(R.id.tickEntry)
 
-        fun bind(entry: Item.Entry) {
+        fun bind(entry: Item.Entry, onDetails: ((String?) -> Unit)?) {
             label.text = entry.text
+            itemView.setOnClickListener { onDetails?.invoke(entry.dataJson) }
             itemView.setOnLongClickListener {
                 DetectionAdapter.copyToClipboard(itemView.context, entry.copyValue)
                 true

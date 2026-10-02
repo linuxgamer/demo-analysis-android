@@ -24,6 +24,13 @@
     <string name="remember">Remember choice</string>
     <string name="just_once">Just once</string>
     <string name="no_browser">No browser found</string>
+    <string name="detection_details">Detection details</string>
+    <string name="copy">Copy</string>
+    <string name="recent_demos">Recent demos</string>
+    <string name="history_clear">Clear</string>
+    <string name="history_meta">%1$d detections · %2$s</string>
+    <string name="history_rerun">Re-run</string>
+    <string name="history_expired">Access to this file expired — pick it again</string>
     <string name="reset">Reset algorithm settings</string>
     <string name="reset_confirm">Return every algorithm switch and parameter to its default?</string>
     <string name="author_line">Author: %1$s</string>
@@ -36,6 +43,8 @@
     <string name="progress_line">%1$d%% — %2$,d / %3$,d ticks</string>
     <string name="chevron_collapsed">▶</string>
     <string name="expand">Expand/collapse</string>
+    <string name="about">About · Licenses</string>
+    <string name="about_text">TF2 demo cheat-detection analyser — Android port of demo-analysis.\n\nAnalysis core: demo-analysis by Nocrex, fidoo and teltta (GPLv3): %1$s\nExtended fork used as the analysis dependency: tf2-demo-player-aio: %2$s\nDemo parser: tf-demo-parser (MIT): %3$s\n\nThis distribution is a combined work; the GPLv3 applies to the distributed APKs. This app is not affiliated with Valve.</string>
     <string name="copied">Copied</string>
     <string name="failed">Failed: %1$s</string>
     <string name="import_params">Import</string>

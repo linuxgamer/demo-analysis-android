@@ -64,6 +64,28 @@ class SettingsActivity : AppCompatActivity() {
         findViewById<Button>(R.id.exportButton).setOnClickListener {
             exportParams.launch("params.json")
         }
+        findViewById<android.widget.TextView>(R.id.aboutButton).setOnClickListener {
+            showAbout()
+        }
+    }
+
+    /** Version, license summary and upstream credits. */
+    private fun showAbout() {
+        val version = runCatching {
+            packageManager.getPackageInfo(packageName, 0).versionName
+        }.getOrNull() ?: "?"
+        com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
+            .setTitle(getString(R.string.app_name) + " " + version)
+            .setMessage(
+                getString(
+                    R.string.about_text,
+                    "https://github.com/Nocrex/demo-analysis",
+                    "https://github.com/eatthefreakingpaper/tf2-demo-player-aio",
+                    "https://github.com/demostf/parser",
+                ),
+            )
+            .setPositiveButton(android.R.string.ok, null)
+            .show()
     }
 
     private fun setupAppearance() {

@@ -193,6 +193,17 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:nestedScrollingEnabled="false" />
+
+            <TextView
+                android:id="@+id/aboutButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="16dp"
+                android:background="?attr/selectableItemBackground"
+                android:padding="8dp"
+                android:text="@string/about"
+                android:textAppearance="?attr/textAppearanceBodyMedium" />
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 </LinearLayout>
