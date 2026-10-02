@@ -106,6 +106,8 @@ class MainActivity : AppCompatActivity() {
 
         detectionsList.layoutManager = LinearLayoutManager(this)
         detectionsList.adapter = detectionAdapter
+        detectionAdapter.onOpenProfile = { steamId -> openProfile(steamId, ask = false) }
+        detectionAdapter.onChooseProfile = { steamId -> openProfile(steamId, ask = true) }
 
         analyzeButton.setOnClickListener {
             pickedUri?.let(::startAnalysisIfSizeOk)
@@ -134,6 +136,50 @@ class MainActivity : AppCompatActivity() {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.phase.collect { phase -> render(phase) }
             }
+        }
+    }
+
+    /** Profile site URLs; order must match AppearanceStore SITE_* constants. */
+    private fun profileUrl(site: Int, steamId: String): String? = when (site) {
+        AppearanceStore.SITE_STEAM -> "https://steamcommunity.com/profiles/$steamId"
+        AppearanceStore.SITE_STEAMHISTORY -> "https://steamhistory.net/id/$steamId"
+        AppearanceStore.SITE_SHADEFALL -> "https://shadefall.net/archive/$steamId"
+        else -> null
+    }
+
+    private fun openProfile(steamId: String, ask: Boolean) {
+        val remembered = AppearanceStore.profileSite(this)
+        if (!ask && remembered != AppearanceStore.SITE_ASK) {
+            profileUrl(remembered, steamId)?.let { openUrl(it) }
+            return
+        }
+        var rememberChoice = AppearanceStore.profileSite(this) != AppearanceStore.SITE_ASK
+        val sites = listOf(
+            AppearanceStore.SITE_STEAM to getString(R.string.site_steam),
+            AppearanceStore.SITE_STEAMHISTORY to getString(R.string.site_steamhistory),
+            AppearanceStore.SITE_SHADEFALL to getString(R.string.site_shadefall),
+        )
+        com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
+            .setTitle(getString(R.string.open_profile) + " · " + steamId)
+            .setItems(sites.map { it.second }.toTypedArray()) { _, which ->
+                val site = sites[which].first
+                profileUrl(site, steamId)?.let { openUrl(it) }
+                // "Remember" was pre-selected from the last use of this dialog.
+                if (rememberChoice) AppearanceStore.setProfileSite(this, site)
+            }
+            .setMultiChoiceItems(
+                arrayOf(getString(R.string.remember)),
+                booleanArrayOf(AppearanceStore.profileSite(this) != AppearanceStore.SITE_ASK),
+            ) { _, _, checked -> rememberChoice = checked }
+            .setNegativeButton(R.string.just_once, null)
+            .show()
+    }
+
+    /** Custom Tab when a browser supports it, plain intent otherwise. */
+    private fun openUrl(url: String) {
+        val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, Uri.parse(url))
+        runCatching { startActivity(intent) }.onFailure {
+            Toast.makeText(this, R.string.no_browser, Toast.LENGTH_SHORT).show()
         }
     }
 

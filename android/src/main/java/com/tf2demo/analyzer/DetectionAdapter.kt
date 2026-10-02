@@ -26,6 +26,12 @@ class DetectionAdapter(
     var playerNames: Map<Long, String> = emptyMap(),
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
+    /** Player-row action button: open the profile on the remembered site. */
+    var onOpenProfile: ((String) -> Unit)? = null
+
+    /** Player-row button long-press: force the site chooser even if remembered. */
+    var onChooseProfile: ((String) -> Unit)? = null
+
     sealed class Item {
         /** Expandable row (player or algorithm group). */
         class Group(
@@ -133,6 +139,7 @@ class DetectionAdapter(
         private val chevron = view.findViewById<ImageView>(R.id.groupChevron)
         private val name = view.findViewById<TextView>(R.id.groupName)
         private val meta = view.findViewById<TextView>(R.id.groupMeta)
+        private val action = view.findViewById<ImageView>(R.id.groupAction)
 
         fun bind(group: Item.Group) {
             name.text = group.label
@@ -150,11 +157,22 @@ class DetectionAdapter(
             chevron.rotation = if (group.expanded) 90f else 0f
             if (group.copyValue != null) {
                 itemView.setOnLongClickListener {
-                    copyToClipboard(itemView.context, group.copyValue)
+                    DetectionAdapter.copyToClipboard(itemView.context, group.copyValue)
+                    true
+                }
+                // The open-profile button only makes sense on player rows.
+                action.visibility = View.VISIBLE
+                action.setOnClickListener { view ->
+                    view.isPressed = false
+                    onOpenProfile?.invoke(group.copyValue)
+                }
+                action.setOnLongClickListener {
+                    onChooseProfile?.invoke(group.copyValue)
                     true
                 }
             } else {
                 itemView.isLongClickable = false
+                action.visibility = View.GONE
             }
             itemView.setOnClickListener { view ->
                 val target = if (group.expanded) 0f else 90f

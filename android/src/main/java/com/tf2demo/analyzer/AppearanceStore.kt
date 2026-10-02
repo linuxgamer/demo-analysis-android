@@ -7,17 +7,23 @@ import android.content.res.Configuration
 import androidx.core.view.WindowCompat
 
 /**
- * Appearance preferences: theme mode (follow system / light / dark). Applied
- * in [AnalyzerApp.onCreate]; the system bar icon colors follow in
- * [applySystemBarTheme].
+ * UI preferences: theme mode (follow system / light / dark), the system bar
+ * icon colors, and which site opens player profiles.
  */
 object AppearanceStore {
     const val MODE_SYSTEM = 0
     const val MODE_LIGHT = 1
     const val MODE_DARK = 2
 
+    // Profile viewer sites; SITE_ASK (-1) shows the chooser every time.
+    const val SITE_ASK = -1
+    const val SITE_STEAM = 0
+    const val SITE_STEAMHISTORY = 1
+    const val SITE_SHADEFALL = 2
+
     private const val PREFS = "appearance"
     private const val KEY_MODE = "theme_mode"
+    private const val KEY_PROFILE_SITE = "profile_site"
 
     private fun prefs(context: Context): SharedPreferences =
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
@@ -26,6 +32,13 @@ object AppearanceStore {
 
     fun setThemeMode(context: Context, mode: Int) {
         prefs(context).edit().putInt(KEY_MODE, mode).apply()
+    }
+
+    fun profileSite(context: Context): Int =
+        prefs(context).getInt(KEY_PROFILE_SITE, SITE_ASK)
+
+    fun setProfileSite(context: Context, site: Int) {
+        prefs(context).edit().putInt(KEY_PROFILE_SITE, site).apply()
     }
 
     /** True when the current configuration resolves to a dark UI. */

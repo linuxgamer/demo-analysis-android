@@ -17,6 +17,13 @@
     <string name="cancel">Cancel</string>
     <string name="cancelled">Analysis cancelled</string>
     <string name="demo_too_large">Demo is %1$d MB — over the %2$d MB limit (Settings → Performance)</string>
+    <string name="open_profile">Open profile</string>
+    <string name="site_steam">Steam</string>
+    <string name="site_steamhistory">SteamHistory</string>
+    <string name="site_shadefall">Shadefall</string>
+    <string name="remember">Remember choice</string>
+    <string name="just_once">Just once</string>
+    <string name="no_browser">No browser found</string>
     <string name="reset">Reset algorithm settings</string>
     <string name="reset_confirm">Return every algorithm switch and parameter to its default?</string>
     <string name="author_line">Author: %1$s</string>
