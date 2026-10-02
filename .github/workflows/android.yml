@@ -69,6 +69,7 @@ jobs:
       - name: Attach APKs to release
         uses: softprops/action-gh-release@v2
         with:
+          # The artifact preserves the apk/{debug,release}/ directory layout.
           files: |
-            demo-analysis-android-debug.apk
-            demo-analysis-android-release.apk
+            **/demo-analysis-android-debug.apk
+            **/demo-analysis-android-release.apk
