@@ -5,27 +5,32 @@
     android:background="?attr/selectableItemBackground"
     android:gravity="center_vertical"
     android:orientation="horizontal"
-    android:paddingVertical="10dp"
+    android:paddingVertical="12dp"
     android:paddingHorizontal="4dp">
 
     <TextView
         android:id="@+id/groupChevron"
-        android:layout_width="wrap_content"
+        android:layout_width="24dp"
         android:layout_height="wrap_content"
-        android:textAppearance="?attr/textAppearanceLabelMedium" />
+        android:text="@string/chevron_collapsed"
+        android:textAlignment="center"
+        android:textAppearance="?attr/textAppearanceTitleSmall" />
 
     <TextView
         android:id="@+id/groupName"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="6dp"
+        android:layout_marginStart="8dp"
         android:layout_weight="1"
-        android:textAppearance="?attr/textAppearanceTitleSmall" />
+        android:ellipsize="end"
+        android:singleLine="true"
+        android:textAppearance="?attr/textAppearanceBodyLarge" />
 
     <TextView
-        android:id="@+id/groupCount"
+        android:id="@+id/groupMeta"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
+        android:fontFamily="monospace"
         android:textAppearance="?attr/textAppearanceLabelMedium" />
 </LinearLayout>

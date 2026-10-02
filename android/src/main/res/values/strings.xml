@@ -2,19 +2,22 @@
 <resources>
     <string name="app_name">TF2DemoAnalyzer</string>
     <string name="pick_demo">Pick demo</string>
-    <string name="analyze">Analyze</string>
-    <string name="idle">Pick a .dem file to begin</string>
-    <string name="share_json">Share JSON</string>
+    <string name="analyze">Analyze!</string>
+    <string name="export_detections">Export Detections to JSON</string>
+    <string name="settings">Settings</string>
+    <string name="author_line">Author: %1$s</string>
+    <string name="steamid_line">Author steamid: %1$s</string>
+    <string name="created_line">Created: %1$s</string>
+    <string name="total_line">Total detections: %1$d</string>
     <string name="detections">Detections</string>
     <string name="detections_count">Detections: %1$d</string>
     <string name="no_detections">No detections</string>
-    <string name="author_line">Author: %1$s (tap to copy)</string>
-    <string name="server_line">Server: %1$s (tap to copy)</string>
+    <string name="progress_line">%1$d%% — %2$,d / %3$,d ticks</string>
+    <string name="chevron_collapsed">▶</string>
     <string name="copied">Copied</string>
     <string name="failed">Failed: %1$s</string>
-    <string name="settings">Algorithms</string>
     <string name="import_params">Import</string>
     <string name="export_params">Export</string>
     <string name="imported">Parameters imported</string>
-    <string name="exported">params.json saved</string>
+    <string name="exported">Saved</string>
 </resources>

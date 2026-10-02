@@ -168,11 +168,26 @@ fn run_analysis(
             |_worker, _current, _total| {},
         )?;
 
+        // The header carries only the author's nick; expose their SteamID64
+        // when exactly one known player has that nick.
+        let author_steamid = analyser.header.as_ref().and_then(|header| {
+            let matches: Vec<u64> = analyser
+                .state
+                .player_names
+                .iter()
+                .filter(|(_, name)| *name == &header.nick)
+                .map(|(id, _)| *id)
+                .collect();
+            (matches.len() == 1).then_some(matches[0])
+        });
+
         let analysis = serde_json::json!({
             "server_ip": analyser.header.as_ref().map_or("unknown".to_string(), |h| h.server.clone()),
             "duration": u32::from(analyser.tick),
             "author": analyser.header.as_ref().map_or("unknown".to_string(), |h| h.nick.clone()),
             "map": analyser.header.as_ref().map_or("unknown".to_string(), |h| h.map.clone()),
+            "author_steamid": author_steamid,
+            "players": analyser.state.player_names,
             "detections": analyser.detections,
         });
         Ok(serde_json::to_string(&analysis)?)
