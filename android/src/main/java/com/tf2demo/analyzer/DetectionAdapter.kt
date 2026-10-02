@@ -37,27 +37,6 @@ class DetectionAdapter(
     var onOpenProfile: ((String) -> Unit)? = null
 
     /** Algorithm-row long-press: show what this detector looks for. */
-    var onAlgorithmInfo: ((String) -> Unit)? = null
-
-    /** Long descriptions for algorithm groups, keyed by algorithm name. */
-    val algorithmDescriptions = mutableMapOf(
-        "viewangles_180degrees" to R.string.algo_180,
-        "nocrex/oob_pitch" to R.string.algo_oob_pitch,
-        "nocrex/angle_repeat" to R.string.algo_angle_repeat,
-        "nocrex/aimsnap" to R.string.algo_aimsnap,
-        "angle_history" to R.string.algo_angle_history,
-        "backtrack" to R.string.algo_backtrack,
-        "double_tap" to R.string.algo_double_tap,
-        "triggerbot" to R.string.algo_triggerbot,
-        "firewindow" to R.string.algo_firewindow,
-        "recorder_aim_assist" to R.string.algo_recorder,
-        "fidoo/silent_aim" to R.string.algo_silent_aim,
-        "fidoo/psilent4" to R.string.algo_psilent,
-        "fidoo/nospread" to R.string.algo_nospread,
-        "fidoo/auto_backstab" to R.string.algo_auto_backstab,
-        "fidoo/bunnyhop" to R.string.algo_bunnyhop,
-        "fidoo/invalid_equip_region" to R.string.algo_equip_region,
-    )
 
     sealed class Item {
         /** Expandable row (player or algorithm group). */
@@ -205,16 +184,17 @@ class DetectionAdapter(
             } else {
                 itemView.isLongClickable = false
                 action.visibility = View.GONE
-                // Algorithm rows: long-press explains the detector.
+                // Algorithm rows: long-press explains the detector. The key
+                // carries the player prefix; the label is the algorithm name.
                 itemView.setOnLongClickListener { view ->
-                    algorithmDescriptions[group.key]?.let { resId ->
+                    AlgorithmInfo.description(group.label)?.let { resId ->
                         MaterialAlertDialogBuilder(view.context)
                             .setTitle(group.label)
                             .setMessage(resId)
                             .setPositiveButton(android.R.string.ok, null)
                             .show()
                     }
-                    algorithmDescriptions.containsKey(group.key)
+                    AlgorithmInfo.description(group.label) != null
                 }
             }
             itemView.setOnClickListener { view ->

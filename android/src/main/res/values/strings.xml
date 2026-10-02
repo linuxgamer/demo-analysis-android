@@ -26,6 +26,7 @@
     <string name="copy">Copy</string>
     <string name="language">Language</string>
     <string name="language_system">System</string>
+    <string name="profile_site">Profile site</string>
     <string name="algo_180">Detects instant 180° view or pitch flips within a single server tick — the signature of aim snapping.</string>
     <string name="algo_oob_pitch">Flags pitch angles outside the physically possible range (±90°); only hacks can look past the poles.</string>
     <string name="algo_angle_repeat">Detects repeated identical view angle deltas across ticks — human aim never repeats exactly.</string>

@@ -35,11 +35,13 @@ class AlgorithmAdapter(
 
     inner class Holder(view: View) : RecyclerView.ViewHolder(view) {
         private val sw = view.findViewById<MaterialSwitch>(R.id.algorithmSwitch)
+        private val nameView = view.findViewById<TextView>(R.id.algorithmName)
         private val summary = view.findViewById<TextView>(R.id.paramsSummary)
         private val paramsButton = view.findViewById<ImageView>(R.id.paramsButton)
 
         fun bind(info: SettingsStore.AlgorithmInfo) {
-            sw.text = info.name
+            nameView.text = info.name
+            sw.contentDescription = info.name
             sw.isChecked = state.enabled[info.name] ?: info.defaultEnabled
             sw.setOnCheckedChangeListener { _, checked ->
                 state.enabled[info.name] = checked
@@ -56,9 +58,19 @@ class AlgorithmAdapter(
             summary.text = text
 
             // The gear opens the parameter dialog; rows without parameters
-            // hide it.
+            // hide it. Long-press explains the detector.
             paramsButton.visibility = if (info.params.isEmpty()) View.INVISIBLE else View.VISIBLE
             paramsButton.setOnClickListener { showEditDialog(info) }
+            paramsButton.setOnLongClickListener { view ->
+                AlgorithmInfo.description(info.name)?.let { resId ->
+                    MaterialAlertDialogBuilder(view.context)
+                        .setTitle(info.name)
+                        .setMessage(resId)
+                        .setPositiveButton(android.R.string.ok, null)
+                        .show()
+                }
+                AlgorithmInfo.description(info.name) != null
+            }
         }
 
         private fun showEditDialog(info: SettingsStore.AlgorithmInfo) {

@@ -44,6 +44,7 @@
     <string name="copy">Копировать</string>
     <string name="language">Язык</string>
     <string name="language_system">Как в системе</string>
+    <string name="profile_site">Сайт профилей</string>
     <string name="algo_180">Ловит мгновенные развороты обзора или наклона на 180° в пределах одного тика сервера — почерк аимснапа.</string>
     <string name="algo_oob_pitch">Помечает углы наклона за пределами физически возможного диапазона (±90°); за полюса может смотреть только чит.</string>
     <string name="algo_angle_repeat">Ловит повторяющиеся одинаковые дельты углов обзора между тиками — человеческое прицеливание никогда не повторяется точно.</string>

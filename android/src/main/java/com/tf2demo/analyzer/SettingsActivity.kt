@@ -49,6 +49,7 @@ class SettingsActivity : AppCompatActivity() {
 
         setupAppearance()
         setupLanguage()
+        setupProfileSite()
 
         val schema = SettingsStore.schema(DemoAnalysis.algorithmsJson())
         state = SettingsStore.load(this, schema)
@@ -131,17 +132,19 @@ class SettingsActivity : AppCompatActivity() {
     ) {
         val group =
             findViewById<com.google.android.material.button.MaterialButtonToggleGroup>(groupId)
+        // The group tracks selection by child view id: programmatic buttons
+        // need generated ids, and the initial highlight must go through
+        // group.check() (setting isChecked before addView is not tracked).
+        val optionById = mutableMapOf<Int, T>()
         options.forEach { option ->
-            // Explicit outlined style: buttons created in code default to the
-            // filled style, which clashes with the XML-defined toggle groups.
             val button = com.google.android.material.button.MaterialButton(
                 this,
                 null,
                 com.google.android.material.R.attr.materialButtonOutlinedStyle,
             ).apply {
+                id = android.view.View.generateViewId()
                 text = label(option)
-                tag = option
-                isChecked = option == current
+                optionById[id] = option
             }
             group.addView(
                 button,
@@ -150,11 +153,11 @@ class SettingsActivity : AppCompatActivity() {
                     android.view.ViewGroup.LayoutParams.WRAP_CONTENT,
                 ),
             )
+            if (option == current) group.check(button.id)
         }
         group.addOnButtonCheckedListener { _, checkedId, isChecked ->
             if (!isChecked) return@addOnButtonCheckedListener
-            findViewById<com.google.android.material.button.MaterialButton>(checkedId)
-                ?.tag?.let { @Suppress("UNCHECKED_CAST") select(it as T) }
+            optionById[checkedId]?.let(select)
         }
     }
 
@@ -195,6 +198,20 @@ class SettingsActivity : AppCompatActivity() {
             SettingsStore.maxDemoMbOption(this),
             label = { if (it == 0) getString(R.string.auto) else "${it}M" },
         ) { SettingsStore.setMaxDemoMb(this, it) }
+
+    private fun setupProfileSite() {
+        val siteLabels = mapOf(
+            AppearanceStore.SITE_STEAM to getString(R.string.site_steam),
+            AppearanceStore.SITE_STEAMHISTORY to getString(R.string.site_steamhistory),
+            AppearanceStore.SITE_SHADEFALL to getString(R.string.site_shadefall),
+        )
+        fillToggleGroup(
+            R.id.profileSiteGroup,
+            AppearanceStore.PROFILE_SITES,
+            AppearanceStore.profileSite(this),
+            label = { siteLabels.getValue(it) },
+        ) { AppearanceStore.setProfileSite(this, it) }
+    }
 
     /** Confirm-then-clear for the algorithm settings. */
     private fun setupReset() {
