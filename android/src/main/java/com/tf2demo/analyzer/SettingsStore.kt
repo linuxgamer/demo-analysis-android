@@ -20,9 +20,13 @@ object SettingsStore {
     private const val KEY_ENABLED = "enabled"
     private const val KEY_PARAMS = "params"
     private const val KEY_THREADS = "threads"
+    private const val KEY_MAX_DEMO_BYTES = "max_demo_bytes"
 
     /** Valid worker counts for `analyse`; each worker re-reads the demo. */
     val THREAD_OPTIONS = listOf(1, 2, 4)
+
+    /** Limit choices in MB; 0 = Auto (derived from total RAM). */
+    val MAX_DEMO_MB_OPTIONS = listOf(0, 256, 512, 1024, 2048)
 
     fun threads(context: Context): Int {
         val stored = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
@@ -33,6 +37,35 @@ object SettingsStore {
     fun setThreads(context: Context, threads: Int) {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
             .edit().putInt(KEY_THREADS, threads).apply()
+    }
+
+    /** Auto means ~1/4 of total RAM, clamped to the largest option (2 GB). */
+    fun autoMaxDemoBytes(context: Context): Long {
+        val activityManager = context.getSystemService(Context.ACTIVITY_SERVICE)
+            as android.app.ActivityManager
+        val memoryInfo = android.app.ActivityManager.MemoryInfo()
+        activityManager.getMemoryInfo(memoryInfo)
+        val quarterRam = memoryInfo.totalMem / 4
+        return quarterRam.coerceAtMost(2048L * 1024 * 1024)
+    }
+
+    /**
+     * Effective byte limit for demo files, 0 disables the check. The stored
+     * value is in MB; 0 (Auto) resolves to a RAM-based limit.
+     */
+    fun maxDemoBytes(context: Context): Long {
+        val stored = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            .getInt(KEY_MAX_DEMO_BYTES, 0)
+        return if (stored == 0) autoMaxDemoBytes(context) else stored.toLong() * 1024 * 1024
+    }
+
+    fun maxDemoMbOption(context: Context): Int =
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            .getInt(KEY_MAX_DEMO_BYTES, 0)
+
+    fun setMaxDemoMb(context: Context, mb: Int) {
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            .edit().putInt(KEY_MAX_DEMO_BYTES, mb).apply()
     }
 
     /** Clears algorithm settings: everything back to the defaults. */

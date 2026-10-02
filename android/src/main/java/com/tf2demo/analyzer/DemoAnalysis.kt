@@ -40,4 +40,7 @@ object DemoAnalysis {
     external fun progressCurrent(): Int
     external fun progressTotal(): Int
     external fun resetProgress()
+
+    /** Aborts a running analysis; the JNI call itself is non-blocking. */
+    external fun cancelAnalysis()
 }

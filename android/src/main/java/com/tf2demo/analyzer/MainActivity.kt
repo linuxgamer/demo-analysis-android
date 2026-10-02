@@ -7,25 +7,21 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.Button
-import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.json.JSONObject
-import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -34,11 +30,11 @@ class MainActivity : AppCompatActivity() {
     private var pickedUri: Uri? = null
     private var pickedName: String? = null
     private var pickedLastModified: Long = 0
-    private var analysisJob: Job? = null
-    private var lastResult: String? = null
+    private val viewModel: AnalysisViewModel by viewModels()
 
     private lateinit var analyzeButton: Button
     private lateinit var exportButton: Button
+    private lateinit var cancelButton: Button
     private lateinit var status: TextView
     private lateinit var pickPlaceholder: TextView
     private lateinit var demoInfoCard: View
@@ -51,7 +47,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var detectionsHeader: TextView
     private lateinit var detectionsList: RecyclerView
     private lateinit var progressArea: View
-    private lateinit var progressBar: ProgressBar
     private lateinit var progressLabel: TextView
     private val detectionAdapter = DetectionAdapter(playerNames = emptyMap())
 
@@ -71,9 +66,6 @@ class MainActivity : AppCompatActivity() {
             if (uri != null) writeExport(uri)
         }
 
-    private fun exportFileName(): String =
-        (pickedName?.removeSuffix(".dem") ?: "detections") + "-detections.json"
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -88,6 +80,7 @@ class MainActivity : AppCompatActivity() {
             WindowInsetsCompat.CONSUMED
         }
         AppearanceStore.applySystemBarTheme(this)
+
         val toolbar = findViewById<Toolbar>(R.id.toolbar)
         setSupportActionBar(toolbar)
         // The title lives in the toolbar's layout (with the app icon next to
@@ -96,6 +89,7 @@ class MainActivity : AppCompatActivity() {
 
         analyzeButton = findViewById(R.id.analyzeButton)
         exportButton = findViewById(R.id.exportButton)
+        cancelButton = findViewById(R.id.cancelButton)
         status = findViewById(R.id.status)
         pickPlaceholder = findViewById(R.id.pickPlaceholder)
         demoInfoCard = findViewById(R.id.demoInfoCard)
@@ -108,35 +102,95 @@ class MainActivity : AppCompatActivity() {
         detectionsHeader = findViewById(R.id.detectionsHeader)
         detectionsList = findViewById(R.id.detectionsList)
         progressArea = findViewById(R.id.progressArea)
-        progressBar = findViewById(R.id.progressBar)
         progressLabel = findViewById(R.id.progressLabel)
 
         detectionsList.layoutManager = LinearLayoutManager(this)
         detectionsList.adapter = detectionAdapter
 
-        analyzeButton.setOnClickListener { startAnalysis() }
+        analyzeButton.setOnClickListener {
+            pickedUri?.let(::startAnalysisIfSizeOk)
+        }
+        cancelButton.setOnClickListener { viewModel.cancel() }
         exportButton.setOnClickListener {
             exportDetections.launch(exportFileName())
         }
-    }
 
-    override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        menuInflater.inflate(R.menu.menu_main, menu)
-        return true
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean = when (item.itemId) {
-        R.id.action_pick -> {
-            pickDemo.launch(arrayOf("*/*"))
+        // Author name and server IP copy on hold, value only.
+        infoAuthor.setOnLongClickListener { view ->
+            (view.tag as? String)?.let { DetectionAdapter.copyToClipboard(view.context, it) }
+            true
+        }
+        infoAuthorSteamid.setOnLongClickListener { view ->
+            (view.tag as? String)?.let { DetectionAdapter.copyToClipboard(view.context, it) }
+            true
+        }
+        infoCreated.setOnLongClickListener { view ->
+            (view.tag as? String)?.let { DetectionAdapter.copyToClipboard(view.context, it) }
             true
         }
 
-        R.id.action_settings -> {
-            startActivity(android.content.Intent(this, SettingsActivity::class.java))
-            true
+        // Re-render whatever phase the VM is in (also right after a rotation).
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.phase.collect { phase -> render(phase) }
+            }
         }
+    }
 
-        else -> super.onOptionsItemSelected(item)
+    /** Size guard: tf-demo-parser keeps the whole demo in RAM. */
+    private fun startAnalysisIfSizeOk(uri: Uri) {
+        val limit = SettingsStore.maxDemoBytes(this)
+        val size = querySize(uri)
+        if (limit > 0 && size > limit) {
+            val limitMb = limit / (1024 * 1024)
+            Toast.makeText(
+                this,
+                getString(R.string.demo_too_large, size / (1024 * 1024), limitMb),
+                Toast.LENGTH_LONG,
+            ).show()
+            return
+        }
+        viewModel.start(uri)
+    }
+
+    private fun querySize(uri: Uri): Long =
+        contentResolver.query(uri, null, null, null, null)?.use { cursor ->
+            val sizeIndex = cursor.getColumnIndex(OpenableColumns.SIZE)
+            if (sizeIndex >= 0 && cursor.moveToFirst()) cursor.getLong(sizeIndex) else 0L
+        } ?: 0L
+
+    private fun render(phase: AnalysisViewModel.Phase) {
+        when (phase) {
+            is AnalysisViewModel.Phase.Running -> {
+                progressArea.visibility = View.VISIBLE
+                progressLabel.text =
+                    getString(R.string.progress_line, phase.ticks * 100 / phase.total, phase.ticks, phase.total)
+                analyzeButton.isEnabled = false
+                cancelButton.visibility = View.VISIBLE
+                status.text = ""
+            }
+
+            is AnalysisViewModel.Phase.Done -> {
+                progressArea.visibility = View.GONE
+                cancelButton.visibility = View.GONE
+                analyzeButton.isEnabled = pickedUri != null
+                showResult(phase.json)
+                exportButton.isEnabled = true
+            }
+
+            is AnalysisViewModel.Phase.Failed -> {
+                progressArea.visibility = View.GONE
+                cancelButton.visibility = View.GONE
+                analyzeButton.isEnabled = pickedUri != null
+                status.text = if (phase.cancelled) {
+                    getString(R.string.cancelled)
+                } else {
+                    getString(R.string.failed, phase.message)
+                }
+            }
+
+            AnalysisViewModel.Phase.Idle -> {}
+        }
     }
 
     /** Name and creation time from the SAF metadata, before any analysis. */
@@ -172,70 +226,6 @@ class MainActivity : AppCompatActivity() {
         pickPlaceholder.visibility = View.GONE
     }
 
-    private fun startAnalysis() {
-        val uri = pickedUri ?: return
-        analysisJob?.cancel()
-        lastResult = null
-        exportButton.isEnabled = false
-        hideResults()
-        progressArea.visibility = View.VISIBLE
-        progressBar.progress = 0
-        progressLabel.text = ""
-        status.text = ""
-
-        DemoAnalysis.resetProgress()
-        // Progress polling runs while the blocking JNI call churns on Dispatchers.IO.
-        // Both workers write the same global counter, so the polled value
-        // oscillates between their positions; display a monotonic maximum
-        // instead, otherwise the percentage jumps backwards (60% -> 42%).
-        var shownTicks = 0
-        analysisJob = lifecycleScope.launch {
-            val poller = launch {
-                while (isActive) {
-                    val current = DemoAnalysis.progressCurrent()
-                    val total = DemoAnalysis.progressTotal()
-                    if (total > 0) {
-                        shownTicks = maxOf(shownTicks, current)
-                        progressBar.progress = (shownTicks * 1000L / total).toInt()
-                        progressLabel.text =
-                            getString(R.string.progress_line, shownTicks * 100 / total, shownTicks, total)
-                    }
-                    delay(250)
-                }
-            }
-            val outcome = runCatching {
-                withContext(Dispatchers.IO) { runAnalysis(uri) }
-            }
-            poller.cancel()
-            progressArea.visibility = View.GONE
-            outcome
-                .onSuccess { json ->
-                    lastResult = json
-                    showResult(json)
-                    exportButton.isEnabled = true
-                }
-                .onFailure { e ->
-                    status.text = getString(R.string.failed, e.message)
-                }
-        }
-    }
-
-    private fun runAnalysis(uri: Uri): String {
-        val pfd = contentResolver.openFileDescriptor(uri, "r")
-            ?: throw IOException("cannot open $uri")
-        // The Rust side adopts the fd as its very first step and closes it on
-        // every path; detach here so neither the PFD finalizer nor we close it
-        // a second time.
-        val fd = pfd.detachFd()
-        // Enabled set and parameter overrides from the settings screen; the
-        // Rust side normalizes the config (drops unknown entries, coerces
-        // number kinds) exactly like the desktop analyser does.
-        val state = SettingsStore.load(this, SettingsStore.schema(DemoAnalysis.algorithmsJson()))
-        val enabled = state.enabled.filterValues { it }.keys.toTypedArray()
-        val config = SettingsStore.paramsJson(state)
-        return DemoAnalysis.analyse(fd, enabled, config, threads = SettingsStore.threads(this))
-    }
-
     private fun showResult(json: String) {
         val root = JSONObject(json)
         val detections = root.optJSONArray("detections")
@@ -249,25 +239,13 @@ class MainActivity : AppCompatActivity() {
 
         infoAuthor.text = getString(R.string.author_line, root.optString("author", "?"))
         infoAuthor.visibility = View.VISIBLE
-        infoAuthor.setOnLongClickListener { view ->
-            root.optString("author", "").takeIf { it.isNotEmpty() }?.let {
-                DetectionAdapter.copyToClipboard(view.context, it)
-            }
-            true
-        }
+        infoAuthor.tag = root.optString("author", "").takeIf { it.isNotEmpty() }
         // Rust fills this only when the author nick maps to exactly one player.
         infoAuthorSteamid.visibility = View.GONE
         root.optLong("author_steamid", 0L).takeIf { it != 0L }?.let { steamId ->
             infoAuthorSteamid.text = getString(R.string.steamid_line, steamId)
             infoAuthorSteamid.visibility = View.VISIBLE
-            infoAuthorSteamid.setOnLongClickListener { view ->
-                DetectionAdapter.copyToClipboard(view.context, steamId.toString())
-                true
-            }
-        }
-        infoCreated.setOnLongClickListener { view ->
-            (view.tag as? String)?.let { DetectionAdapter.copyToClipboard(view.context, it) }
-            true
+            infoAuthorSteamid.tag = steamId.toString()
         }
 
         val rows = buildList {
@@ -300,17 +278,22 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun writeExport(uri: Uri) {
-        val json = lastResult ?: return
+        val json = when (val phase = viewModel.phase.value) {
+            is AnalysisViewModel.Phase.Done -> phase.json
+            else -> return
+        }
         runCatching {
             contentResolver.openOutputStream(uri)?.use { it.write(json.toByteArray()) }
-            android.widget.Toast.makeText(this, R.string.exported, android.widget.Toast.LENGTH_SHORT)
-                .show()
+            Toast.makeText(this, R.string.exported, Toast.LENGTH_SHORT).show()
         }.onFailure {
-            android.widget.Toast.makeText(
+            Toast.makeText(
                 this,
                 getString(R.string.failed, it.message),
-                android.widget.Toast.LENGTH_LONG,
+                Toast.LENGTH_LONG,
             ).show()
         }
     }
+
+    private fun exportFileName(): String =
+        (pickedName?.removeSuffix(".dem") ?: "detections") + "-detections.json"
 }

@@ -11,6 +11,12 @@
     <string name="params">Parameters</string>
     <string name="algorithms">Algorithms</string>
     <string name="threads">Worker threads</string>
+    <string name="performance">Performance</string>
+    <string name="max_demo_size">Demo size limit</string>
+    <string name="auto">Auto</string>
+    <string name="cancel">Cancel</string>
+    <string name="cancelled">Analysis cancelled</string>
+    <string name="demo_too_large">Demo is %1$d MB — over the %2$d MB limit (Settings → Performance)</string>
     <string name="reset">Reset algorithm settings</string>
     <string name="reset_confirm">Return every algorithm switch and parameter to its default?</string>
     <string name="author_line">Author: %1$s</string>

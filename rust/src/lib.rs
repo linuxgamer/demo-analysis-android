@@ -8,7 +8,7 @@ use std::fs::File;
 use std::io::Read;
 use std::os::unix::io::FromRawFd;
 use std::panic::{self, AssertUnwindSafe};
-use std::sync::atomic::Ordering;
+use std::sync::atomic::{AtomicBool, Ordering};
 
 use anyhow::{anyhow, Context};
 use jni::objects::{JClass, JObjectArray, JString};
@@ -25,6 +25,18 @@ use demo_analysis::{MAX_WORKERS, PROGRESS_CURRENT, PROGRESS_TOTAL, SILENT, WORKE
 // fails, which would abort the whole scan on Android. They are never exposed
 // to the app, even if requested by name.
 const DEV_ALGORITHMS: &[&str] = &["all_messages", "write_to_file", "viewangles_to_csv"];
+
+// Set by cancelAnalysis(); the progress callback panics when it sees true,
+// which unwinds out of the parse loop and gets caught by the outer
+// catch_unwind as a regular error - the upstream analyse() has no other way
+// to abort mid-demo.
+static CANCELLED: AtomicBool = AtomicBool::new(false);
+
+fn check_cancelled() {
+    if CANCELLED.load(Ordering::Relaxed) {
+        panic!("analysis cancelled by user");
+    }
+}
 
 fn panic_message(payload: &(dyn std::any::Any + Send)) -> String {
     payload
@@ -161,12 +173,21 @@ fn run_analysis(
         let (normalized, _) = normalize_config(&config);
         apply_config(&mut algorithms, &normalized);
 
-        let analyser = analyse_multithreaded(
+        let analyser = match analyse_multithreaded(
             &bytes,
             algorithms,
             threads.max(1) as usize,
-            |_worker, _current, _total| {},
-        )?;
+            |_worker, _current, _total| check_cancelled(),
+        ) {
+            Ok(analyser) => analyser,
+            // In multithreaded mode a worker panic surfaces as this generic
+            // join error; if a cancel was requested, report that instead.
+            Err(e) => {
+                check_cancelled();
+                return Err(e);
+            }
+        };
+        check_cancelled();
 
         // The header carries only the author's nick; expose their SteamID64
         // when exactly one known player has that nick.
@@ -221,7 +242,18 @@ pub extern "system" fn Java_com_tf2demo_analyzer_DemoAnalysis_resetProgress<'loc
 ) {
     PROGRESS_CURRENT.store(0, Ordering::Relaxed);
     PROGRESS_TOTAL.store(0, Ordering::Relaxed);
+    CANCELLED.store(false, Ordering::Relaxed);
     for slot in WORKER_TICKS.iter().take(MAX_WORKERS) {
         slot.store(0, Ordering::Relaxed);
     }
+}
+
+// Aborts a running analysis: the progress callback panics on the next tick
+// and the JNI entry point reports it as a normal error.
+#[no_mangle]
+pub extern "system" fn Java_com_tf2demo_analyzer_DemoAnalysis_cancelAnalysis<'local>(
+    _env: JNIEnv<'local>,
+    _class: JClass<'local>,
+) {
+    CANCELLED.store(true, Ordering::Relaxed);
 }

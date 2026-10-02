@@ -91,19 +91,28 @@ class SettingsActivity : AppCompatActivity() {
         }
 
         setupThreads()
+        setupMaxSize()
         setupReset()
     }
 
-    /** Worker-count selector; populates buttons from SettingsStore options. */
-    private fun setupThreads() {
+    /**
+     * Fills a toggle group with buttons for every option and persists the
+     * selected one through [select]; used for threads and the demo size cap.
+     */
+    private fun <T> fillToggleGroup(
+        groupId: Int,
+        options: List<T>,
+        current: T,
+        label: (T) -> String,
+        select: (T) -> Unit,
+    ) {
         val group =
-            findViewById<com.google.android.material.button.MaterialButtonToggleGroup>(R.id.threadsGroup)
-        val current = SettingsStore.threads(this)
-        for (threads in SettingsStore.THREAD_OPTIONS) {
+            findViewById<com.google.android.material.button.MaterialButtonToggleGroup>(groupId)
+        options.forEach { option ->
             val button = com.google.android.material.button.MaterialButton(this).apply {
-                text = threads.toString()
-                tag = threads
-                isChecked = threads == current
+                text = label(option)
+                tag = option
+                isChecked = option == current
             }
             group.addView(
                 button,
@@ -116,9 +125,25 @@ class SettingsActivity : AppCompatActivity() {
         group.addOnButtonCheckedListener { _, checkedId, isChecked ->
             if (!isChecked) return@addOnButtonCheckedListener
             findViewById<com.google.android.material.button.MaterialButton>(checkedId)
-                ?.tag?.toString()?.toIntOrNull()?.let { SettingsStore.setThreads(this, it) }
+                ?.tag?.let { @Suppress("UNCHECKED_CAST") select(it as T) }
         }
     }
+
+    private fun setupThreads() =
+        fillToggleGroup(
+            R.id.threadsGroup,
+            SettingsStore.THREAD_OPTIONS,
+            SettingsStore.threads(this),
+            label = { it.toString() },
+        ) { SettingsStore.setThreads(this, it) }
+
+    private fun setupMaxSize() =
+        fillToggleGroup(
+            R.id.maxSizeGroup,
+            SettingsStore.MAX_DEMO_MB_OPTIONS,
+            SettingsStore.maxDemoMbOption(this),
+            label = { if (it == 0) getString(R.string.auto) else "${it}M" },
+        ) { SettingsStore.setMaxDemoMb(this, it) }
 
     /** Confirm-then-clear for the algorithm settings. */
     private fun setupReset() {
