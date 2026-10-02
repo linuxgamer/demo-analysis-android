@@ -142,17 +142,37 @@ class MainActivity : AppCompatActivity() {
             true
         }
 
+        findViewById<TextView>(R.id.historyClear).setOnClickListener {
+            HistoryStore.clear(this)
+            refreshHistory()
+        }
+        refreshHistory()
+
         // Re-render whatever phase the VM is in (also right after a rotation).
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.phase.collect { phase -> render(phase) }
             }
         }
-        findViewById<TextView>(R.id.historyClear).setOnClickListener {
-            HistoryStore.clear(this)
-            refreshHistory()
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        menuInflater.inflate(R.menu.menu_main, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean = when (item.itemId) {
+        R.id.action_pick -> {
+            pickDemo.launch(arrayOf("*/*"))
+            true
         }
-        refreshHistory()
+
+        R.id.action_settings -> {
+            startActivity(android.content.Intent(this, SettingsActivity::class.java))
+            true
+        }
+
+        else -> super.onOptionsItemSelected(item)
     }
 
     /** Recent analyses, shown while no demo is picked; tap re-runs one. */
