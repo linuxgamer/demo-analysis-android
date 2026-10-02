@@ -69,7 +69,7 @@ adb install android/build/outputs/apk/debug/demo-analysis-android-debug.apk
 
 The JNI layer runs under a host JVM: `cargo build` in `rust/`, then load
 `libdemo_analysis_android.so` from a Java class declaring the same native
-methods (`com.tf2demo.analyzer.DemoAnalysis`) — see AGENTS.md.
+methods (`dev.godetect.tf2demo.DemoAnalysis`) — see AGENTS.md.
 
 ---
 
@@ -142,7 +142,7 @@ adb install android/build/outputs/apk/debug/demo-analysis-android-debug.apk
 
 JNI-слой можно гонять под host JVM: `cargo build` в `rust/` и вызвать
 `libdemo_analysis_android.so` из Java-класса с теми же native-методами
-(`com.tf2demo.analyzer.DemoAnalysis`) — см. AGENTS.md.
+(`dev.godetect.tf2demo.DemoAnalysis`) — см. AGENTS.md.
 
 ---
 
@@ -202,7 +202,7 @@ sed -i '/# Android SDK + Rust (android-demo-detector)/,+4d' ~/.bashrc
 ### 6. Устройство / Device
 
 ```bash
-adb uninstall com.tf2demo.analyzer              # если APK ставился на телефон/эмулятор
+adb uninstall dev.godetect.tf2demo              # если APK ставился на телефон/эмулятор
 ```
 
 ### Проверка, что всё чисто / Verify everything is gone

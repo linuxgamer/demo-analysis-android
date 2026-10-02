@@ -1,4 +1,4 @@
-package com.tf2demo.analyzer
+package dev.godetect.tf2demo
 
 import android.content.ClipData
 import android.content.ClipboardManager

@@ -51,7 +51,7 @@ fn throw(env: &mut JNIEnv, msg: &str) {
 }
 
 #[no_mangle]
-pub extern "system" fn Java_com_tf2demo_analyzer_DemoAnalysis_version<'local>(
+pub extern "system" fn Java_dev_godetect_tf2demo_DemoAnalysis_version<'local>(
     mut env: JNIEnv<'local>,
     _class: JClass<'local>,
 ) -> jstring {
@@ -67,7 +67,7 @@ pub extern "system" fn Java_com_tf2demo_analyzer_DemoAnalysis_version<'local>(
 // Full algorithm registry for the settings UI: name, default flag and the
 // parameter schema. Dev algorithms are excluded; they make no sense on Android.
 #[no_mangle]
-pub extern "system" fn Java_com_tf2demo_analyzer_DemoAnalysis_algorithmsJsonRaw<'local>(
+pub extern "system" fn Java_dev_godetect_tf2demo_DemoAnalysis_algorithmsJsonRaw<'local>(
     mut env: JNIEnv<'local>,
     _class: JClass<'local>,
 ) -> jstring {
@@ -107,7 +107,7 @@ pub extern "system" fn Java_com_tf2demo_analyzer_DemoAnalysis_algorithmsJsonRaw<
 // worker threads and returns the detections JSON. Panics inside the library
 // are caught and surface as a Java RuntimeException instead of killing the app.
 #[no_mangle]
-pub extern "system" fn Java_com_tf2demo_analyzer_DemoAnalysis_analyse<'local>(
+pub extern "system" fn Java_dev_godetect_tf2demo_DemoAnalysis_analyse<'local>(
     mut env: JNIEnv<'local>,
     _class: JClass<'local>,
     fd: jint,
@@ -219,7 +219,7 @@ fn run_analysis(
 }
 
 #[no_mangle]
-pub extern "system" fn Java_com_tf2demo_analyzer_DemoAnalysis_progressCurrent<'local>(
+pub extern "system" fn Java_dev_godetect_tf2demo_DemoAnalysis_progressCurrent<'local>(
     _env: JNIEnv<'local>,
     _class: JClass<'local>,
 ) -> jint {
@@ -227,7 +227,7 @@ pub extern "system" fn Java_com_tf2demo_analyzer_DemoAnalysis_progressCurrent<'l
 }
 
 #[no_mangle]
-pub extern "system" fn Java_com_tf2demo_analyzer_DemoAnalysis_progressTotal<'local>(
+pub extern "system" fn Java_dev_godetect_tf2demo_DemoAnalysis_progressTotal<'local>(
     _env: JNIEnv<'local>,
     _class: JClass<'local>,
 ) -> jint {
@@ -236,7 +236,7 @@ pub extern "system" fn Java_com_tf2demo_analyzer_DemoAnalysis_progressTotal<'loc
 
 // Atomics persist across runs; reset them so a fresh scan starts from zero.
 #[no_mangle]
-pub extern "system" fn Java_com_tf2demo_analyzer_DemoAnalysis_resetProgress<'local>(
+pub extern "system" fn Java_dev_godetect_tf2demo_DemoAnalysis_resetProgress<'local>(
     _env: JNIEnv<'local>,
     _class: JClass<'local>,
 ) {
@@ -251,7 +251,7 @@ pub extern "system" fn Java_com_tf2demo_analyzer_DemoAnalysis_resetProgress<'loc
 // Aborts a running analysis: the progress callback panics on the next tick
 // and the JNI entry point reports it as a normal error.
 #[no_mangle]
-pub extern "system" fn Java_com_tf2demo_analyzer_DemoAnalysis_cancelAnalysis<'local>(
+pub extern "system" fn Java_dev_godetect_tf2demo_DemoAnalysis_cancelAnalysis<'local>(
     _env: JNIEnv<'local>,
     _class: JClass<'local>,
 ) {

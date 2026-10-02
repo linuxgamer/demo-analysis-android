@@ -1,4 +1,4 @@
-package com.tf2demo.analyzer
+package dev.godetect.tf2demo
 
 /**
  * Thin wrapper over the Rust JNI bridge. All methods are blocking and must be

@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace = "com.tf2demo.analyzer"
+    namespace = "dev.godetect.tf2demo"
     compileSdk = 35
 
     // APK names: demo-analysis-android-<buildType>.apk instead of android-<buildType>.apk.
@@ -23,7 +23,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.tf2demo.analyzer"
+        applicationId = "dev.godetect.tf2demo"
         minSdk = 26
         targetSdk = 35
         versionCode = 9

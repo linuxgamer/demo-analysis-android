@@ -14,7 +14,7 @@ file is for agents working in this repo.
 ├── settings.gradle.kts, build.gradle.kts, gradle.properties
 ├── android/                 # application module (Kotlin)
 │   ├── build.gradle.kts     # buildRust task: cargo-ndk → src/main/jniLibs
-│   └── src/main/java/com/tf2demo/analyzer/
+│   └── src/main/java/dev.godetect.tf2demo/
 │       ├── DemoAnalysis.kt  # external funs (JNI)
 │       └── MainActivity.kt  # SAF picker, analysis on Dispatchers.IO, progress polling
 └── rust/                    # cdylib crate demo-analysis-android (JNI bridge)
@@ -132,7 +132,7 @@ export ANDROID_NDK_HOME="$ANDROID_HOME/ndk/27.0.12077973"
   section does not apply to dependency builds).
 - Quick core check without a device: `cargo check` in `rust/` (needs network —
   git dependency). For a JNI smoke test under a host JVM, see the session
-  history: a class with the native methods of `com.tf2demo.analyzer.DemoAnalysis`
+  history: a class with the native methods of `dev.godetect.tf2demo.DemoAnalysis`
   plus `rust/target/debug/libdemo_analysis_android.so`.
 - CI does the same: `.github/workflows/android.yml` (ubuntu-latest, temurin 21,
   ndk 27, cargo-ndk from taiki-e/install-action). It runs the Kotlin unit
