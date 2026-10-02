@@ -80,10 +80,30 @@ Clone sources land in:
 - fd ownership: Kotlin calls `detachFd()`, Rust adopts `File::from_raw_fd` as
   its **very first action** and closes it on every path (never close twice).
 - Core panics are caught by `catch_unwind` → Java `RuntimeException`.
-- The result JSON mirrors the CLI `print_detection_json` format (no
-  `println!`, built from public `CheatAnalyser` fields).
-- Kotlin: `DemoAnalysis.kt` (external funs), `MainActivity.kt` (SAF picker,
-  `Dispatchers.IO`, progress polling 4x/s, JSON sharing).
+- The result JSON mirrors the CLI `print_detection_json` format plus two
+  extras for the UI: `players` (steamid64 → nickname, from
+  `CheatAnalyserState.player_names`) and `author_steamid` (filled only when
+  the header nick maps to exactly one known player). No `println!`, built
+  from public `CheatAnalyser` fields.
+- Kotlin layout:
+  - `DemoAnalysis.kt` — external funs (JNI).
+  - `MainActivity.kt` — toolbar (app icon + name, PICK DEMO / SETTINGS
+    actions), demo card (author/SteamID/created hold-to-copy), detection
+    tree in `DetectionAdapter.kt` (player → algorithm → tick, hold to copy
+    SteamID/tick), bottom progress (monotonic display — both workers write
+    the same global counter, so raw polling jumps backwards).
+  - `SettingsActivity.kt` + `SettingsStore.kt` — theme mode
+    (system/light/dark via `AppearanceStore` + `AppCompatDelegate`), per
+    algorithm switches, typed parameter dialogs, `params.json`
+    import/export (same shape as the desktop file; Rust-side
+    `normalize_config` guarantees compatibility).
+  - `AnalyzerApp.kt` — `AppCompatDelegate.setDefaultNightMode` on startup;
+    the AMOLED mode was removed (it fought Material You overlays; RIP).
+  - Algorithms default ON, including `backtrack`/`double_tap`/`nocrex/aimsnap`
+    which upstream disables — see `SettingsStore.FORCE_DEFAULT_ON`.
+  - targetSdk 35 forces edge-to-edge: both activities pad their roots by
+    system-bar + display-cutout insets, and `AppearanceStore.applySystemBarTheme`
+    keeps status/nav bar icons legible in both themes.
 - Signing: both build types use the keystore committed at `signing/debug.keystore`
   (standard Android debug credentials: password "android", alias "androiddebugkey"),
   so CI and local builds share one signature and update over each other without
@@ -103,15 +123,19 @@ export ANDROID_NDK_HOME="$ANDROID_HOME/ndk/27.0.12077973"
 ./gradlew :android:assembleDebug :android:assembleRelease
 ```
 
-- The `:android:buildRust` task runs `cargo-ndk` (arm64-v8a + x86_64,
-  `--platform 26`) and drops the `.so` files into `android/src/main/jniLibs`
-  (not committed).
+- The `:android:buildRust` task runs `cargo-ndk` (armeabi-v7a + arm64-v8a +
+  x86_64, `--platform 26`) and drops the `.so` files into
+  `android/src/main/jniLibs` (not committed). APKs are universal (all three
+  ABIs) and named `demo-analysis-android-<buildType>.apk` via
+  `base.archivesName`.
 - Quick core check without a device: `cargo check` in `rust/` (needs network —
   git dependency). For a JNI smoke test under a host JVM, see the session
   history: a class with the native methods of `com.tf2demo.analyzer.DemoAnalysis`
   plus `rust/target/debug/libdemo_analysis_android.so`.
 - CI does the same: `.github/workflows/android.yml` (ubuntu-latest, temurin 21,
-  ndk 27, cargo-ndk from taiki-e/install-action).
+  ndk 27, cargo-ndk from taiki-e/install-action). It builds debug + release
+  and uploads both APKs as one artifact; tags attach them to a release.
+- Current version: v0.8-beta (`versionCode` 8).
 
 ## Platform constraints (important)
 

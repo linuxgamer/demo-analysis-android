@@ -7,9 +7,9 @@ import android.content.res.Configuration
 import androidx.core.view.WindowCompat
 
 /**
- * Appearance preferences: theme mode (follow system / light / dark) and the
- * AMOLED toggle. The theme is applied in [AnalyzerApp.onCreate] and in
- * [SettingsActivity] before `setContentView` so the change is instant.
+ * Appearance preferences: theme mode (follow system / light / dark). Applied
+ * in [AnalyzerApp.onCreate]; the system bar icon colors follow in
+ * [applySystemBarTheme].
  */
 object AppearanceStore {
     const val MODE_SYSTEM = 0
@@ -18,7 +18,6 @@ object AppearanceStore {
 
     private const val PREFS = "appearance"
     private const val KEY_MODE = "theme_mode"
-    private const val KEY_AMOLED = "amoled"
 
     private fun prefs(context: Context): SharedPreferences =
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
@@ -27,12 +26,6 @@ object AppearanceStore {
 
     fun setThemeMode(context: Context, mode: Int) {
         prefs(context).edit().putInt(KEY_MODE, mode).apply()
-    }
-
-    fun amoled(context: Context): Boolean = prefs(context).getBoolean(KEY_AMOLED, false)
-
-    fun setAmoled(context: Context, on: Boolean) {
-        prefs(context).edit().putBoolean(KEY_AMOLED, on).apply()
     }
 
     /** True when the current configuration resolves to a dark UI. */

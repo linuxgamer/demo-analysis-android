@@ -89,15 +89,6 @@ class SettingsActivity : AppCompatActivity() {
             (application as AnalyzerApp).applyTheme()
             recreate()
         }
-
-        val amoled = findViewById<com.google.android.material.materialswitch.MaterialSwitch>(
-            R.id.amoledSwitch
-        )
-        amoled.isChecked = AppearanceStore.amoled(this)
-        amoled.setOnCheckedChangeListener { _, checked ->
-            AppearanceStore.setAmoled(this, checked)
-            recreate()
-        }
     }
 
     /** True when the current configuration resolves to a dark UI. */

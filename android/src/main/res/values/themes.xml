@@ -1,18 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Theme follows the system (DayNight); AMOLED is an overlay applied at
-         runtime when enabled and the UI is dark. -->
+    <!-- Theme follows the system (DayNight); Material You recolors the
+         Material3 roles on supported devices. -->
     <style name="Theme.TF2DemoAnalyzer" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="android:windowBackground">@color/app_background</item>
         <item name="appBackgroundColor">@color/app_background</item>
         <item name="appPanelColor">@color/panel_background</item>
         <item name="appDetailColor">@color/detail_background</item>
-    </style>
-
-    <style name="Theme.TF2DemoAnalyzer.AMOLED">
-        <item name="android:windowBackground">@color/amoled_background</item>
-        <item name="appBackgroundColor">@color/amoled_background</item>
-        <item name="appPanelColor">@color/amoled_panel</item>
-        <item name="appDetailColor">@color/amoled_detail</item>
     </style>
 </resources>

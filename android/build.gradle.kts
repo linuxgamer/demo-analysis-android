@@ -26,8 +26,8 @@ android {
         applicationId = "com.tf2demo.analyzer"
         minSdk = 26
         targetSdk = 35
-        versionCode = 7
-        versionName = "0.7-beta"
+        versionCode = 8
+        versionName = "0.8-beta"
         ndk {
             // Universal APK: 64-bit ARM, 32-bit ARM and x86_64 (emulators).
             abiFilters += listOf("armeabi-v7a", "arm64-v8a", "x86_64")

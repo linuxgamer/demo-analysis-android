@@ -5,9 +5,4 @@
     <color name="panel_background">#F4F4F4</color>
     <color name="detail_background">#E4E4E4</color>
     <color name="ic_launcher_background">#FFFFFF</color>
-
-    <!-- AMOLED: true black surfaces to save power on OLED screens. -->
-    <color name="amoled_background">#000000</color>
-    <color name="amoled_panel">#000000</color>
-    <color name="amoled_detail">#161616</color>
 </resources>
