@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Night variants of the concept palette (values/colors.xml holds the light ones). -->
-    <color name="app_background">#000000</color>
-    <color name="panel_background">#0D0D0D</color>
-    <color name="detail_background">#1E1E1E</color>
+    <!-- Night variants of the concept palette (values/colors.xml holds the light ones).
+        Slightly lifted from true black so panels read as surfaces; the AMOLED
+        mode is the one that goes fully black. -->
+    <color name="app_background">#121214</color>
+    <color name="panel_background">#1C1C1F</color>
+    <color name="detail_background">#26262A</color>
 </resources>

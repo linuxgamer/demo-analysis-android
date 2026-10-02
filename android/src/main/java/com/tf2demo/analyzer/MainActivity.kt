@@ -76,6 +76,11 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // AMOLED overlay goes through applyStyle (not setTheme) so the
+        // Material You overlay applied before onCreate survives.
+        if (AppearanceStore.amoled(this) && AppearanceStore.isDarkUi(this)) {
+            theme.applyStyle(R.style.Theme_TF2DemoAnalyzer_AMOLED, true)
+        }
         setContentView(R.layout.activity_main)
 
         // targetSdk 35 enforces edge-to-edge: pad by the system bars' insets so
@@ -90,6 +95,9 @@ class MainActivity : AppCompatActivity() {
         AppearanceStore.applySystemBarTheme(this)
         val toolbar = findViewById<Toolbar>(R.id.toolbar)
         setSupportActionBar(toolbar)
+        // The title lives in the toolbar's layout (with the app icon next to
+        // it); disable the ActionBar-provided one to avoid a duplicate.
+        supportActionBar?.setDisplayShowTitleEnabled(false)
 
         analyzeButton = findViewById(R.id.analyzeButton)
         exportButton = findViewById(R.id.exportButton)

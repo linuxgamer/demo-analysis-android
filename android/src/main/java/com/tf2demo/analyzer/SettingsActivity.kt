@@ -30,12 +30,16 @@ class SettingsActivity : AppCompatActivity() {
         }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        // The AMOLED overlay must be set before any content is inflated.
-        if (AppearanceStore.amoled(this) && isDarkUi()) {
-            setTheme(R.style.Theme_TF2DemoAnalyzer_AMOLED)
-        }
         super.onCreate(savedInstanceState)
+        // AMOLED overlay goes through applyStyle (not setTheme) so the
+        // Material You overlay applied before onCreate survives.
+        if (AppearanceStore.amoled(this) && AppearanceStore.isDarkUi(this)) {
+            theme.applyStyle(R.style.Theme_TF2DemoAnalyzer_AMOLED, true)
+        }
         setContentView(R.layout.activity_settings)
+
+        findViewById<com.google.android.material.appbar.MaterialToolbar>(R.id.settingsToolbar)
+            .setNavigationOnClickListener { finish() }
 
         // Same edge-to-edge handling as the main screen: pad by the system
         // bars' insets so the list doesn't render under the status/task bars.
@@ -102,18 +106,6 @@ class SettingsActivity : AppCompatActivity() {
     }
 
     /** True when the current configuration resolves to a dark UI. */
-    private fun isDarkUi(): Boolean {
-        val mode = AppearanceStore.themeMode(this)
-        val systemDark =
-            (resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK) ==
-                android.content.res.Configuration.UI_MODE_NIGHT_YES
-        return when (mode) {
-            AppearanceStore.MODE_DARK -> true
-            AppearanceStore.MODE_LIGHT -> false
-            else -> systemDark
-        }
-    }
-
     private fun readText(uri: Uri): String? = runCatching {
         contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() }
     }.getOrNull()

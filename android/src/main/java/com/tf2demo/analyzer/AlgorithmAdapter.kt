@@ -4,6 +4,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -35,6 +36,7 @@ class AlgorithmAdapter(
     inner class Holder(view: View) : RecyclerView.ViewHolder(view) {
         private val sw = view.findViewById<MaterialSwitch>(R.id.algorithmSwitch)
         private val summary = view.findViewById<TextView>(R.id.paramsSummary)
+        private val paramsButton = view.findViewById<ImageView>(R.id.paramsButton)
 
         fun bind(info: SettingsStore.AlgorithmInfo) {
             sw.text = info.name
@@ -53,10 +55,10 @@ class AlgorithmAdapter(
             summary.visibility = if (info.params.isEmpty()) View.GONE else View.VISIBLE
             summary.text = text
 
-            // No parameters to edit — the whole row just toggles.
-            if (info.params.isEmpty()) return
-
-            itemView.setOnClickListener { showEditDialog(info) }
+            // The gear opens the parameter dialog; rows without parameters
+            // hide it.
+            paramsButton.visibility = if (info.params.isEmpty()) View.INVISIBLE else View.VISIBLE
+            paramsButton.setOnClickListener { showEditDialog(info) }
         }
 
         private fun showEditDialog(info: SettingsStore.AlgorithmInfo) {
@@ -90,7 +92,7 @@ class AlgorithmAdapter(
                 editors.add(param to editor)
             }
 
-            MaterialAlertDialogBuilder(context)
+            val dialog = MaterialAlertDialogBuilder(context)
                 .setTitle(info.name)
                 .setView(container)
                 .setPositiveButton(android.R.string.ok) { _, _ ->
@@ -112,7 +114,18 @@ class AlgorithmAdapter(
                     notifyItemChanged(bindingAdapterPosition)
                 }
                 .setNegativeButton(android.R.string.cancel, null)
-                .show()
+                .create()
+            dialog.show()
+            // Material puts the affirmative button on the right by default;
+            // the concept wants OK on the left of Cancel.
+            dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE)?.let { ok ->
+                val cancel = dialog.getButton(android.app.AlertDialog.BUTTON_NEGATIVE)
+                (ok.parent as? android.widget.LinearLayout)?.let { buttons ->
+                    buttons.removeView(ok)
+                    buttons.addView(ok, 0)
+                }
+                cancel?.requestLayout()
+            }
         }
     }
 }

@@ -6,9 +6,13 @@
     <string name="idle">Pick a demo file to begin — use "PICK DEMO" in the toolbar</string>
     <string name="export_detections">Export Detections to JSON</string>
     <string name="settings">Settings</string>
-    <string name="author_line">Author: %1$s (hold to copy)</string>
+    <string name="settings_title">Settings</string>
+    <string name="back">Back</string>
+    <string name="params">Parameters</string>
+    <string name="algorithms">Algorithms</string>
+    <string name="author_line">Author: %1$s</string>
     <string name="steamid_line">Author\'s SteamID: %1$s</string>
-    <string name="created_line">Created: %1$s (hold to copy)</string>
+    <string name="created_line">Created: %1$s</string>
     <string name="total_line">Total detections: %1$d</string>
     <string name="detections">Detections</string>
     <string name="detections_count">Detections: %1$d</string>
