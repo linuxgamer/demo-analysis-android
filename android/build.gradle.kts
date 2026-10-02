@@ -42,10 +42,18 @@ android {
         jvmTarget = "17"
     }
     buildTypes {
-        // Signed with the debug key so CI-produced release APKs are installable;
-        // no secrets to distribute, this build is not meant for store publishing.
         release {
-            isMinifyEnabled = false
+            // R8 shrinks/dexes the Kotlin side; the proguard rules keep the
+            // JNI entry points and the org.json reflection paths alive.
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro",
+            )
+            // Signed with the debug key so CI-produced release APKs are
+            // installable; no secrets to distribute, this build is not meant
+            // for store publishing.
             signingConfig = signingConfigs.getByName("debug")
         }
     }

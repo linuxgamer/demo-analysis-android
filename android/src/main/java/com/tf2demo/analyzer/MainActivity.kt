@@ -53,6 +53,14 @@ class MainActivity : AppCompatActivity() {
     private val pickDemo =
         registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
             if (uri != null) {
+                // Persist the read grant so history re-runs survive reboots
+                // (the system allows ~128 persisted grants per app).
+                runCatching {
+                    contentResolver.takePersistableUriPermission(
+                        uri,
+                        android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION,
+                    )
+                }
                 pickedUri = uri
                 queryDemoInfo(uri)
                 analyzeButton.isEnabled = true

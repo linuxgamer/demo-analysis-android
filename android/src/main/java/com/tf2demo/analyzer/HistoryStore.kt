@@ -32,16 +32,41 @@ object HistoryStore {
         }
     }.getOrDefault(emptyList())
 
-    /** Moves `entry` to the top (re-analysis) or adds it as a new entry. */
+    /**
+     * Moves `entry` to the top (re-analysis) or adds it as a new entry.
+     * SAF read-grants of entries dropped past the cap are released so we
+     * don't leak permissions for files the user can no longer see.
+     */
     fun record(context: Context, uri: Uri, name: String, detections: Int) {
         val existing = load(context).toMutableList()
         existing.removeAll { it.uri == uri.toString() }
         existing.add(0, Entry(uri.toString(), name, System.currentTimeMillis(), detections))
-        save(context, existing.take(MAX_ENTRIES))
+        val kept = existing.take(MAX_ENTRIES)
+        save(context, kept)
+        releaseStaleGrants(context, kept)
     }
 
     fun clear(context: Context) {
+        save(context, emptyList())
+        releaseStaleGrants(context, emptyList())
         java.io.File(context.filesDir, FILE).delete()
+    }
+
+    /** Releases read grants for URIs no longer present in the history. */
+    private fun releaseStaleGrants(context: Context, kept: List<Entry>) {
+        val resolver = context.contentResolver
+        val keptUris = kept.map { it.uri }.toSet()
+        resolver.persistedUriPermissions
+            .filter { it.isReadPermission }
+            .filter { it.uri.toString() !in keptUris }
+            .forEach { permission ->
+                runCatching {
+                    resolver.releasePersistableUriPermission(
+                        permission.uri,
+                        android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION,
+                    )
+                }
+            }
     }
 
     private fun save(context: Context, entries: List<Entry>) {
